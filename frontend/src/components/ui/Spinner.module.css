@@ -1,0 +1,43 @@
+.wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rosa);
+  animation: bounce 0.9s ease-in-out infinite;
+}
+.dots i:nth-child(2) {
+  background: var(--amber);
+  animation-delay: 0.15s;
+}
+.dots i:nth-child(3) {
+  background: var(--sage);
+  animation-delay: 0.3s;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-7px);
+    opacity: 1;
+  }
+}

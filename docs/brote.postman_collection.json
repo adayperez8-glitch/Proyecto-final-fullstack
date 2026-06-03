@@ -1,0 +1,165 @@
+{
+  "info": {
+    "name": "Brote — API + IA",
+    "description": "Colección de la API (backend Node) y el microservicio de IA (FastAPI).\n\nVariables:\n- nodeUrl: backend Express (http://localhost:3000)\n- aiUrl: servicio de IA (http://localhost:8000)\n- token: se rellena solo al hacer Login\n- conversationId: se rellena solo al usar el chat\n- internalApiKey: para los endpoints de mantenimiento (= INTERNAL_API_KEY)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "nodeUrl", "value": "http://localhost:3000" },
+    { "key": "aiUrl", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" },
+    { "key": "conversationId", "value": "" },
+    { "key": "internalApiKey", "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{nodeUrl}}/api/auth/register", "host": ["{{nodeUrl}}"], "path": ["api", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@brote.app\",\n  \"username\": \"nuevo\",\n  \"displayName\": \"Usuario Nuevo\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) { pm.collectionVariables.set('token', data.token); }",
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{nodeUrl}}/api/auth/login", "host": ["{{nodeUrl}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ada@brote.app\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/auth/me", "host": ["{{nodeUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recursos",
+      "item": [
+        {
+          "name": "Feed de sesiones",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/sessions/feed", "host": ["{{nodeUrl}}"], "path": ["api", "sessions", "feed"] }
+          }
+        },
+        {
+          "name": "Iniciar sesión de foco",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{nodeUrl}}/api/sessions", "host": ["{{nodeUrl}}"], "path": ["api", "sessions"] },
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"STUDY\",\n  \"goalMinutes\": 25\n}" }
+          }
+        },
+        {
+          "name": "Fijar ánimo (dispara coach N8N)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{nodeUrl}}/api/moods", "host": ["{{nodeUrl}}"], "path": ["api", "moods"] },
+            "body": { "mode": "raw", "raw": "{\n  \"mood\": \"FRUSTRADO\",\n  \"note\": \"Día difícil\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA (microservicio)",
+      "item": [
+        {
+          "name": "Chat (nuevo / continuar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.conversation_id) { pm.collectionVariables.set('conversationId', data.conversation_id); }",
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{aiUrl}}/api/chat", "host": ["{{aiUrl}}"], "path": ["api", "chat"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"¿Cómo dejo de procrastinar?\",\n  \"conversation_id\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Historial de conversación",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{aiUrl}}/api/chat/history/{{conversationId}}",
+              "host": ["{{aiUrl}}"],
+              "path": ["api", "chat", "history", "{{conversationId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mantenimiento (N8N)",
+      "item": [
+        {
+          "name": "Limpieza de historias",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-api-key", "value": "{{internalApiKey}}" }],
+            "url": {
+              "raw": "{{nodeUrl}}/api/maintenance/stories/cleanup",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "maintenance", "stories", "cleanup"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

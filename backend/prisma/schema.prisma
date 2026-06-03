@@ -1,0 +1,177 @@
+// Brote — esquema de datos
+// Red social de foco: la gente abre sesiones de estudio/trabajo con cuenta
+// atrás, comparte su estado de ánimo e historias, y se motivan entre todos.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SessionType {
+  STUDY // estudio
+  WORK // trabajo
+}
+
+enum SessionStatus {
+  ACTIVE // en marcha (countdown corriendo)
+  COMPLETED // terminó el tiempo objetivo
+  CANCELLED // el usuario la canceló antes de tiempo
+}
+
+enum MoodType {
+  MOTIVADO
+  ENERGICO
+  CONCENTRADO
+  TRANQUILO
+  CANSADO
+  FRUSTRADO
+  ANSIOSO
+  DESANIMADO
+}
+
+enum Visibility {
+  PUBLIC // mensaje flotante que todos pueden ver
+  PRIVATE // mensaje directo (MD)
+}
+
+// ─── Modelos ────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String
+  passwordHash String
+  avatarUrl    String?
+  bio          String?
+  role         Role     @default(USER)
+  lastSeenAt   DateTime @default(now()) // para calcular presencia
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions      FocusSession[]
+  moods         Mood[]
+  stories       Story[]
+  reactionsSent Reaction[]
+  commentsSent  Comment[]
+  messagesSent  Message[]      @relation("MessagesSent")
+  messagesRecv  Message[]      @relation("MessagesReceived")
+  friends       Friendship[]   @relation("FriendshipUser")
+  friendOf      Friendship[]   @relation("FriendshipFriend")
+}
+
+model FocusSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        SessionType
+  goalMinutes Int // objetivo en minutos (p.ej. 480 = 8h)
+  startedAt   DateTime      @default(now())
+  endsAt      DateTime // startedAt + goalMinutes
+  status      SessionStatus @default(ACTIVE)
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  comments Comment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Mood {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mood      MoodType
+  note      String?
+  date      DateTime @default(now()) // el día al que corresponde este ánimo
+  createdAt DateTime @default(now())
+
+  reactions Reaction[]
+
+  @@index([userId])
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageUrl  String? // historia con imagen (URL)
+  text      String? // historia de texto
+  bgColor   String? // color de fondo para historias de texto
+  createdAt DateTime @default(now())
+  expiresAt DateTime // createdAt + 24h
+
+  messages Message[] // respuestas a esta historia
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  moodId    String
+  mood      Mood     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+  fromId    String
+  from      User     @relation(fields: [fromId], references: [id], onDelete: Cascade)
+  emoji     String // 💪 ❤️ 🔥 ...
+  text      String?
+  createdAt DateTime @default(now())
+
+  @@index([moodId])
+}
+
+model Comment {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   FocusSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  fromId    String
+  from      User         @relation(fields: [fromId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId])
+}
+
+model Message {
+  id         String     @id @default(cuid())
+  fromId     String
+  from       User       @relation("MessagesSent", fields: [fromId], references: [id], onDelete: Cascade)
+  toId       String
+  to         User       @relation("MessagesReceived", fields: [toId], references: [id], onDelete: Cascade)
+  storyId    String? // si es respuesta a una historia
+  story      Story?     @relation(fields: [storyId], references: [id], onDelete: SetNull)
+  text       String
+  visibility Visibility @default(PRIVATE)
+  readAt     DateTime?
+  createdAt  DateTime   @default(now())
+
+  @@index([toId])
+  @@index([fromId])
+}
+
+// Amistad mutua. Cada amistad se guarda como dos filas simétricas
+// (A→B y B→A) para que "los amigos de X" sea una consulta directa.
+model Friendship {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  user      User     @relation("FriendshipUser", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendshipFriend", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}

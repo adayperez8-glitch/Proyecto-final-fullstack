@@ -1,0 +1,61 @@
+/* ─────────────────────────────────────────────────────────────
+   Brote — sistema de diseño "editorial cálido".
+   Revista de diseño: crema intensa, espresso casi negro para máximo
+   contraste, y acentos coral/rosa VIVOS (no lavados). Sombras marcadas
+   y tipografía Fraunces grande y expresiva.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* Superficies — crema con cuerpo (papel manila), tarjetas casi blancas */
+  --paper: #efe2d0;
+  --paper-2: #e7d6c0;
+  --surface: #fffdf8;
+  --surface-2: #fbf2e6;
+
+  /* Tinta — espresso muy oscuro para contraste editorial */
+  --ink: #271710;
+  --ink-soft: #5a4030;
+  --muted: #8a6f5b;
+  --line: #d8c3aa;
+  --line-strong: #c4a884;
+
+  /* Marrones */
+  --espresso: #2e1a0f;
+  --mocha: #6b4327;
+  --latte: #b98e68;
+
+  /* Acentos VIVOS (el golpe de color) */
+  --coral: #e0563b;
+  --coral-deep: #c8432a;
+  --rosa: #e86a86;
+  --rosa-deep: #cf3f63;
+  --rosa-soft: #fbdde2;
+  --amber: #e89b3c;
+  --sage: #4fa07d;
+  --sage-soft: #d9ece2;
+
+  /* Degradados de acento */
+  --grad-warm: linear-gradient(135deg, #e86a86 0%, #e0563b 55%, #e89b3c 100%);
+  --grad-ink: linear-gradient(135deg, #3d2417, #2e1a0f);
+
+  /* Tipografía */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Mulish', system-ui, -apple-system, sans-serif;
+
+  /* Radios */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
+  --r-pill: 999px;
+
+  /* Sombras marcadas y cálidas */
+  --shadow-sm: 0 3px 12px rgba(39, 23, 16, 0.1);
+  --shadow-md: 0 14px 34px rgba(39, 23, 16, 0.16);
+  --shadow-lg: 0 28px 70px rgba(39, 23, 16, 0.26);
+  --shadow-glow: 0 10px 40px rgba(224, 86, 59, 0.28);
+  /* Borde-sombra "imprenta" para un toque editorial nítido */
+  --shadow-print: 5px 5px 0 var(--espresso);
+
+  --maxw: 700px;
+  --nav-h: 68px;
+}

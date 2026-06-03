@@ -1,0 +1,141 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(58, 42, 32, 0.55);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: brote-fade-up 0.2s ease both;
+}
+
+.modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--espresso);
+  font-weight: 700;
+}
+
+.media {
+  position: relative;
+  border-radius: var(--r-md);
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+}
+.media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.text {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  color: var(--espresso);
+  text-align: center;
+}
+.author {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  background: rgba(58, 42, 32, 0.35);
+  padding: 5px 12px 5px 5px;
+  border-radius: var(--r-pill);
+}
+
+.publicMsgs {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  max-height: 110px;
+  overflow-y: auto;
+}
+.pub {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 5px 10px;
+}
+.pub b {
+  color: var(--rosa-deep);
+}
+
+.replyArea {
+  margin-top: 12px;
+}
+.replyBar {
+  display: flex;
+  gap: 8px;
+}
+.replyBar input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 13px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+}
+.replyBar input:focus {
+  outline: none;
+  border-color: var(--rosa);
+}
+.replyBar button {
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  background: var(--espresso);
+  color: var(--paper);
+  font-weight: 600;
+}
+.replyBar button:disabled {
+  opacity: 0.5;
+}
+.pubToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.enviado {
+  margin-top: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--sage);
+}
+.propia {
+  text-align: center;
+  color: var(--muted);
+  padding: 14px;
+  font-size: 0.9rem;
+}

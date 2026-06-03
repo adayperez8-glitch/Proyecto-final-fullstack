@@ -1,0 +1,82 @@
+.box {
+  width: 100%;
+}
+
+.toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  text-align: left;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease;
+}
+.toggle:hover {
+  border-color: var(--rosa);
+}
+.bigEmoji {
+  font-size: 1.4rem;
+}
+.chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.panel {
+  margin-top: 10px;
+  animation: brote-fade-up 0.25s ease both;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (min-width: 460px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--mood) 12%, var(--surface));
+  border: 1.5px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition:
+    transform 0.12s ease,
+    border-color 0.15s ease;
+}
+.chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--mood);
+}
+.chipEmoji {
+  font-size: 1.5rem;
+}
+
+.nota {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+}
+.nota:focus {
+  outline: none;
+  border-color: var(--rosa);
+  box-shadow: 0 0 0 3px var(--rosa-soft);
+}

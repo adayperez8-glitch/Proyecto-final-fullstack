@@ -1,0 +1,117 @@
+.card {
+  position: relative;
+  background:
+    radial-gradient(130% 120% at 100% 0%, rgba(232, 106, 134, 0.16), transparent 55%),
+    var(--surface);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+  padding: 26px 24px;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.type {
+  padding: 15px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--line-strong);
+  background: var(--paper);
+  font-weight: 800;
+  font-size: 1rem;
+  transition: all 0.15s ease;
+}
+.type:hover {
+  border-color: var(--coral);
+  transform: translateY(-1px);
+}
+.typeActive {
+  border-color: var(--espresso);
+  background: var(--espresso);
+  color: var(--paper);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.preset {
+  padding: 9px 17px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line-strong);
+  background: var(--paper);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.preset:hover {
+  border-color: var(--coral);
+}
+.presetActive {
+  background: var(--coral);
+  color: #fff;
+  border-color: var(--coral);
+  box-shadow: 0 6px 16px rgba(224, 86, 59, 0.3);
+}
+
+.custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+.custom input {
+  width: 88px;
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--line-strong);
+  background: var(--paper);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.custom input:focus {
+  outline: none;
+  border-color: var(--coral);
+}
+
+.err {
+  color: var(--coral-deep);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.start {
+  width: 100%;
+  padding: 15px;
+  border-radius: var(--r-pill);
+  background: var(--grad-warm);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.08rem;
+  box-shadow: 0 12px 28px rgba(224, 86, 59, 0.34);
+  transition:
+    transform 0.12s ease,
+    filter 0.15s ease;
+}
+.start:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+.start:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}

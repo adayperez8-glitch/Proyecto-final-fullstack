@@ -1,0 +1,43 @@
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 48px 24px;
+  min-height: 180px;
+}
+
+.emoji {
+  font-size: 2.6rem;
+  animation: brote-pop 0.4s ease both;
+}
+
+.titulo {
+  font-size: 1.25rem;
+  margin-top: 4px;
+}
+
+.muted {
+  color: var(--muted);
+  max-width: 32ch;
+}
+
+.errorText {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+.retry {
+  margin-top: 8px;
+  padding: 8px 18px;
+  border-radius: var(--r-pill);
+  background: var(--espresso);
+  color: var(--paper);
+  font-weight: 600;
+  transition: transform 0.12s ease;
+}
+.retry:hover {
+  transform: translateY(-1px);
+}

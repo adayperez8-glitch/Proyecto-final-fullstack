@@ -1,0 +1,310 @@
+{
+  "name": "Brote — Coach de ánimo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brote-mood",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "ecb14401-e004-405e-bf21-99297495c8a9",
+      "name": "Webhook (ánimo registrado)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        0
+      ],
+      "webhookId": "bb8f9341-774c-4068-a4fa-dca300ab7bfb"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "50e9d3e7-31bf-4cb3-88e7-54faf3da065c",
+                    "leftValue": "={{ $json.body.category }}",
+                    "rightValue": "negative",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "negativo"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "7ee54563-72c3-4a72-a67f-9672a4e246ee",
+      "name": "¿Ánimo negativo?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "98cdd655-78df-45f5-9440-b154a07d0324",
+              "leftValue": "={{ $json.body.previousWasPositive }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "173b270b-9111-42ee-b170-8a92594ccee8",
+              "leftValue": "={{ $json.body.previousWasEarlierDay }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d13915e8-3bc3-4dc1-bf86-012a07fd03a3",
+      "name": "¿Ayer fue positivo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c93ce08b-1370-496d-9355-32a745348dde",
+              "name": "moodId",
+              "value": "={{ $json.body.moodId }}",
+              "type": "string"
+            },
+            {
+              "id": "4964de1d-3030-4e8d-8650-36c88c79fe21",
+              "name": "emoji",
+              "value": "🌿",
+              "type": "string"
+            },
+            {
+              "id": "1c44ff76-d6a1-4023-80f5-b380dbcb242b",
+              "name": "prompt",
+              "value": "={{ \"Una persona llamada \" + $json.body.displayName + \" registró hoy que se siente \" + $json.body.mood + \", pero ayer se sentía \" + $json.body.previousMood + \" (positivo). Anímala recordándole que ayer estuvo bien y que puede recuperar ese ánimo.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "eb6f2660-ec38-4556-9ff5-b1accb1d6f03",
+              "name": "fallbackText",
+              "value": "={{ \"Ayer tuviste un buen día, \" + $json.body.displayName + \". Hagamos que ese ánimo vuelva hoy: paso a paso, tú puedes 💪\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "724d8910-e354-482a-b3af-d6e53259595a",
+      "name": "Mensaje: recuperar el ánimo de ayer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d929a6cf-a4fd-481f-9b27-783196d8f3d4",
+              "name": "moodId",
+              "value": "={{ $json.body.moodId }}",
+              "type": "string"
+            },
+            {
+              "id": "ac706a44-2b14-4a7c-8eb7-abc22f128a30",
+              "name": "emoji",
+              "value": "🌱",
+              "type": "string"
+            },
+            {
+              "id": "5514796b-9677-454f-9b70-7e331088c7be",
+              "name": "prompt",
+              "value": "={{ \"Una persona llamada \" + $json.body.displayName + \" registró que se siente \" + $json.body.mood + \". Dale un mensaje breve de apoyo y calma para su sesión de foco.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a6175c5b-510e-4fa1-a2df-c327cec7f58a",
+              "name": "fallbackText",
+              "value": "={{ \"Días así también cuentan, \" + $json.body.displayName + \". Respira, ve a tu ritmo: estoy contigo 🌱\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5d53d9e5-08b6-47dc-9d5e-02ba59a93511",
+      "name": "Mensaje: apoyo estándar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Genera el texto de apoyo con IA y, si falla o no hay clave, usa la plantilla.\n// Lee prompt/fallbackText/emoji/moodId que prepararon los nodos Set previos.\nconst apiKey = $env.OPENAI_API_KEY;\nconst prompt = $json.prompt;\nconst fallback = $json.fallbackText;\nlet text = fallback;\nif (apiKey) {\n  try {\n    const r = await fetch('https://api.openai.com/v1/chat/completions', {\n      method: 'POST',\n      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },\n      body: JSON.stringify({\n        model: 'gpt-4o-mini',\n        max_tokens: 80,\n        temperature: 0.8,\n        messages: [\n          { role: 'system', content: 'Eres Brote, un companero de foco calido y muy breve. Responde en espanol, 1-2 frases, tono cercano, sin saludos ni emojis al inicio.' },\n          { role: 'user', content: prompt },\n        ],\n      }),\n    });\n    if (r.ok) {\n      const data = await r.json();\n      const out = data.choices?.[0]?.message?.content?.trim();\n      if (out) text = out;\n    }\n  } catch (e) {\n    // nos quedamos con la plantilla (fallback)\n  }\n}\nreturn { moodId: $json.moodId, emoji: $json.emoji, text };"
+      },
+      "id": "6014e025-8aac-4795-9bc8-62f735454725",
+      "name": "Generar texto (IA + fallback)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/maintenance/coach/reaction",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ moodId: $json.moodId, emoji: $json.emoji, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "7c166869-386f-4b7d-b51c-ff6a5239f04d",
+      "name": "Crear reacción de apoyo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (ánimo registrado)": {
+      "main": [
+        [
+          {
+            "node": "¿Ánimo negativo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Ánimo negativo?": {
+      "main": [
+        [
+          {
+            "node": "¿Ayer fue positivo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Ayer fue positivo?": {
+      "main": [
+        [
+          {
+            "node": "Mensaje: recuperar el ánimo de ayer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje: apoyo estándar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje: recuperar el ánimo de ayer": {
+      "main": [
+        [
+          {
+            "node": "Generar texto (IA + fallback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje: apoyo estándar": {
+      "main": [
+        [
+          {
+            "node": "Generar texto (IA + fallback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar texto (IA + fallback)": {
+      "main": [
+        [
+          {
+            "node": "Crear reacción de apoyo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

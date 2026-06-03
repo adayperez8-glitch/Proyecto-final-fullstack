@@ -1,0 +1,73 @@
+.wrap {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 4px 10px rgba(39, 23, 16, 0.12));
+}
+
+.progress {
+  transition:
+    stroke-dashoffset 0.9s linear,
+    stroke 1s linear;
+}
+
+/* Brillo vivo mientras la sesión corre */
+.live .svg {
+  animation: ring-pulse 2.6s ease-in-out infinite;
+}
+@keyframes ring-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 4px 10px rgba(39, 23, 16, 0.12));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(224, 86, 59, 0.55));
+  }
+}
+
+.center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.time {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.85rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.sub {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}
+
+/* "completado" es la palabra más larga del centro: la achicamos y le
+   quitamos espaciado para que no choque con el borde del anillo. */
+.subDone {
+  font-size: 0.56rem;
+  letter-spacing: 0.03em;
+}
+
+.check {
+  font-size: 2.6rem;
+  color: var(--sage);
+  line-height: 1;
+  animation: brote-pop 0.45s ease both;
+  filter: drop-shadow(0 0 10px rgba(79, 160, 125, 0.5));
+}
