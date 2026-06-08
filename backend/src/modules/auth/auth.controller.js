@@ -4,6 +4,7 @@ import { signToken } from '../../services/token.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { sendEmail, emails } from '../../services/email.js'
 import { privateUser } from '../../utils/serializers.js'
+import { assertCanAttempt, recordFailure, recordSuccess } from '../../services/loginRateLimit.js'
 
 export async function register(req, res) {
   const { email, username, displayName, password } = req.body
@@ -32,12 +33,23 @@ export async function register(req, res) {
 export async function login(req, res) {
   const { email, password } = req.body
 
+  // Límite de fuerza bruta: máx. 4 intentos fallidos por IP+email cada 10 min.
+  const rateKey = `${req.ip}:${email.toLowerCase()}`
+  assertCanAttempt(rateKey)
+
   const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) throw ApiError.unauthorized('Credenciales inválidas')
+  if (!user) {
+    recordFailure(rateKey)
+    throw ApiError.unauthorized('Credenciales inválidas')
+  }
 
   const ok = await verifyPassword(password, user.passwordHash)
-  if (!ok) throw ApiError.unauthorized('Credenciales inválidas')
+  if (!ok) {
+    recordFailure(rateKey)
+    throw ApiError.unauthorized('Credenciales inválidas')
+  }
 
+  recordSuccess(rateKey) // login correcto → se reinicia el contador
   const token = signToken({ sub: user.id, role: user.role })
   res.json({ usuario: privateUser(user), token })
 }
