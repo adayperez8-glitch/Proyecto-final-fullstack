@@ -33,3 +33,8 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Documentos privados (no publicar en GitHub)
+DESPLIEGUE.md
+PROPUESTA ADAY.md
+REQUISITOS.md
