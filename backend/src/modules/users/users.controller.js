@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { persistMedia } from '../../lib/storage.js'
 import { publicUser, privateUser, sessionDTO, moodDTO, storyDTO } from '../../utils/serializers.js'
 
 const ONLINE_MIN = 5
@@ -154,6 +155,17 @@ export async function profile(req, res) {
 export async function updateMe(req, res) {
   const updated = await prisma.user.update({ where: { id: req.user.id }, data: req.body })
   res.json({ usuario: privateUser(updated) })
+}
+
+// Sube una imagen (desde la galería) y devuelve su URL pública para usarla como
+// avatar. El cliente luego la guarda con PATCH /api/users/me.
+export async function uploadAvatar(req, res) {
+  if (!req.file) throw ApiError.badRequest('No se recibió ninguna imagen')
+  if (!req.file.mimetype.startsWith('image/')) {
+    throw ApiError.badRequest('El avatar debe ser una imagen')
+  }
+  const { url } = await persistMedia(req.file, req)
+  res.status(201).json({ url })
 }
 
 // ── Acciones de administrador ──────────────────────────────────

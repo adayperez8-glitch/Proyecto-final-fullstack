@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useApi } from '../hooks/useApi.js'
@@ -13,12 +13,14 @@ import s from './Profile.module.css'
 export default function Profile() {
   const { username } = useParams()
   const { usuario, actualizarUsuario } = useAuth()
-  const { get, patch, post, del } = useApi()
+  const { get, patch, post, del, upload } = useApi()
 
   const [perfil, setPerfil] = useState(null)
   const [estado, setEstado] = useState('cargando')
   const [editando, setEditando] = useState(false)
   const [form, setForm] = useState({ displayName: '', bio: '', avatarUrl: '' })
+  const [subiendoAvatar, setSubiendoAvatar] = useState(false)
+  const avatarFileRef = useRef(null)
   const [dm, setDm] = useState('')
   const [dmEnviado, setDmEnviado] = useState(false)
   const [viendo, setViendo] = useState(null)
@@ -57,6 +59,22 @@ export default function Profile() {
       setEditando(false)
     } catch {
       /* hook */
+    }
+  }
+
+  // Sube una foto desde la galería y la deja lista como avatar (se persiste al Guardar).
+  const elegirAvatar = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite reelegir el mismo archivo
+    if (!file) return
+    setSubiendoAvatar(true)
+    try {
+      const { url } = await upload('/api/users/me/avatar', file)
+      setForm((f) => ({ ...f, avatarUrl: url }))
+    } catch {
+      /* hook */
+    } finally {
+      setSubiendoAvatar(false)
     }
   }
 
@@ -159,14 +177,27 @@ export default function Profile() {
               onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
             />
           </label>
-          <label>
-            Avatar (URL)
-            <input
-              placeholder="https://…"
-              value={form.avatarUrl}
-              onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
-            />
-          </label>
+          <div className={s.avatarField}>
+            <span className={s.avatarLabel}>Foto de perfil</span>
+            <div className={s.avatarUpload}>
+              <Avatar user={{ ...perfil, avatarUrl: form.avatarUrl }} size={64} />
+              <input
+                ref={avatarFileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={elegirAvatar}
+              />
+              <button
+                type="button"
+                className={s.avatarBtn}
+                onClick={() => avatarFileRef.current?.click()}
+                disabled={subiendoAvatar}
+              >
+                {subiendoAvatar ? 'Subiendo…' : form.avatarUrl ? '🔄 Cambiar foto' : '🖼️ Subir foto'}
+              </button>
+            </div>
+          </div>
           <button className={s.guardar} onClick={guardar}>
             Guardar
           </button>

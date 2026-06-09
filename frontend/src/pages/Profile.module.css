@@ -167,6 +167,32 @@
   outline: none;
   border-color: var(--rosa);
 }
+.avatarField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.avatarLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.avatarUpload {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.avatarBtn {
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--espresso);
+  font-weight: 600;
+}
+.avatarBtn:disabled {
+  opacity: 0.6;
+}
 .guardar {
   align-self: flex-start;
   padding: 10px 22px;
