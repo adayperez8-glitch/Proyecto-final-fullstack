@@ -35,11 +35,19 @@ export async function createStory(req, res) {
   res.status(201).json({ historia: storyDTO({ ...story, user: req.user }) })
 }
 
-// Historias activas (no expiradas) de todos, para la barra de historias.
-export async function feed(_req, res) {
+// Historias activas (no expiradas) de tus amigos (y las tuyas), para la barra.
+export async function feed(req, res) {
   await purgeExpired()
+
+  // Solo se ven historias de amigos (y las propias); nada de desconocidos.
+  const amistades = await prisma.friendship.findMany({
+    where: { userId: req.user.id },
+    select: { friendId: true },
+  })
+  const visibles = [...amistades.map((a) => a.friendId), req.user.id]
+
   const stories = await prisma.story.findMany({
-    where: { expiresAt: { gt: new Date() } },
+    where: { userId: { in: visibles }, expiresAt: { gt: new Date() } },
     include: { user: true },
     orderBy: { createdAt: 'desc' },
   })
