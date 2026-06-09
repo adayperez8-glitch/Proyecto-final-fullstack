@@ -9,6 +9,7 @@ const router = Router()
 
 router.post('/', authenticate, validate(sendMessageSchema), asyncHandler(ctrl.send))
 router.get('/', authenticate, asyncHandler(ctrl.inbox))
+router.get('/unread-count', authenticate, asyncHandler(ctrl.unreadCount))
 router.patch('/:id/read', authenticate, asyncHandler(ctrl.markRead))
 
 export default router

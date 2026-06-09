@@ -82,6 +82,18 @@
 .ico {
   font-size: 1.4rem;
   line-height: 1;
+  position: relative;
+  display: inline-block;
+}
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e0563b;
+  border: 2px solid var(--surface);
 }
 
 .salir {

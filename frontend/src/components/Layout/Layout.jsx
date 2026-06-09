@@ -1,5 +1,7 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useApi } from '../../hooks/useApi.js'
 import Avatar from '../ui/Avatar.jsx'
 import s from './Layout.module.css'
 
@@ -7,7 +9,26 @@ const linkClass = ({ isActive }) => (isActive ? `${s.link} ${s.active}` : s.link
 
 export default function Layout() {
   const { usuario, logout } = useAuth()
+  const { get } = useApi()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [noLeidos, setNoLeidos] = useState(0)
+
+  // Conteo de mensajes sin leer para el aviso del sobre: al cargar, al navegar
+  // (p. ej. al salir de la bandeja ya leída) y cada 20s.
+  useEffect(() => {
+    let activo = true
+    const cargar = () =>
+      get('/api/messages/unread-count')
+        .then((d) => activo && setNoLeidos(d.count))
+        .catch(() => {})
+    cargar()
+    const id = setInterval(cargar, 20000)
+    return () => {
+      activo = false
+      clearInterval(id)
+    }
+  }, [get, location.pathname])
 
   const salir = () => {
     logout()
@@ -30,7 +51,10 @@ export default function Layout() {
               <span className={s.ico}>🔍</span>
             </NavLink>
             <NavLink to="/mensajes" className={linkClass} title="Mensajes" aria-label="Mensajes">
-              <span className={s.ico}>✉️</span>
+              <span className={s.ico}>
+                ✉️
+                {noLeidos > 0 && <span className={s.badge} aria-label={`${noLeidos} sin leer`} />}
+              </span>
             </NavLink>
             <NavLink to="/asistente" className={linkClass} title="Asistente IA" aria-label="Asistente IA">
               <span className={s.ico}>🌱</span>

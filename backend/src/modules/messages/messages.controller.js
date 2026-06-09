@@ -36,6 +36,14 @@ export async function inbox(req, res) {
   res.json({ mensajes: messages.map(messageDTO) })
 }
 
+// Nº de MDs privados recibidos y aún sin leer (para el aviso de la navbar).
+export async function unreadCount(req, res) {
+  const count = await prisma.message.count({
+    where: { toId: req.user.id, visibility: 'PRIVATE', readAt: null },
+  })
+  res.json({ count })
+}
+
 export async function markRead(req, res) {
   const message = await prisma.message.findUnique({ where: { id: req.params.id } })
   if (!message) throw ApiError.notFound('Mensaje no encontrado')
