@@ -20,6 +20,19 @@
   font-size: 0.9rem;
   margin: 0.25rem 0 0;
 }
+.nueva {
+  margin-top: 0.6rem;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+.nueva:disabled {
+  opacity: 0.6;
+}
 
 .chat {
   flex: 1;

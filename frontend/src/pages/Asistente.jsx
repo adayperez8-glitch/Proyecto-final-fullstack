@@ -11,7 +11,7 @@ const SUGERENCIAS = [
 ]
 
 export default function Asistente() {
-  const { mensajes, enviar, enviando, error } = useChat()
+  const { mensajes, enviar, enviando, error, cargandoHistorial, nuevaConversacion } = useChat()
   const [texto, setTexto] = useState('')
   const finRef = useRef(null)
 
@@ -35,10 +35,22 @@ export default function Asistente() {
         <p className={s.sub}>
           Pregúntame sobre técnicas de estudio, concentración o tu propio progreso.
         </p>
+        {!vacio && (
+          <button className={s.nueva} onClick={nuevaConversacion} disabled={enviando}>
+            ✨ Nueva conversación
+          </button>
+        )}
       </header>
 
       <div className={s.chat}>
-        {vacio && (
+        {cargandoHistorial && (
+          <div className={s.empty}>
+            <div className={s.emptyEmoji}>💬</div>
+            <p>Recuperando tu conversación…</p>
+          </div>
+        )}
+
+        {vacio && !cargandoHistorial && (
           <div className={s.empty}>
             <div className={s.emptyEmoji}>💬</div>
             <p>¿En qué te ayudo hoy? Prueba con:</p>
