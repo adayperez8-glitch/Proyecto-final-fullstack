@@ -24,9 +24,12 @@ export default function Layout() {
         .catch(() => {})
     cargar()
     const id = setInterval(cargar, 20000)
+    // La página de mensajes avisa al marcar leídos para refrescar al instante.
+    window.addEventListener('brote:mensajes-leidos', cargar)
     return () => {
       activo = false
       clearInterval(id)
+      window.removeEventListener('brote:mensajes-leidos', cargar)
     }
   }, [get, location.pathname])
 

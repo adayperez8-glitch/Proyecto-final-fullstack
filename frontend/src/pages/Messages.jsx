@@ -8,7 +8,7 @@ import s from './Messages.module.css'
 
 export default function Messages() {
   const { usuario } = useAuth()
-  const { get, post } = useApi()
+  const { get, post, patch } = useApi()
   const [mensajes, setMensajes] = useState([])
   const [estado, setEstado] = useState('cargando')
   const [activo, setActivo] = useState(null)
@@ -28,6 +28,25 @@ export default function Messages() {
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  // Al abrir una conversación, marca como leídos sus mensajes recibidos sin leer.
+  // Así desaparece el punto de la conversación y el aviso del sobre en la navbar.
+  useEffect(() => {
+    if (!activo) return
+    const sinLeer = mensajes.filter((m) => {
+      const partner = m.from.id === usuario.id ? m.to : m.from
+      return partner?.id === activo && m.to.id === usuario.id && !m.readAt
+    })
+    if (sinLeer.length === 0) return
+    Promise.all(sinLeer.map((m) => patch(`/api/messages/${m.id}/read`).catch(() => {}))).then(() => {
+      const ids = new Set(sinLeer.map((m) => m.id))
+      setMensajes((prev) =>
+        prev.map((m) => (ids.has(m.id) ? { ...m, readAt: new Date().toISOString() } : m)),
+      )
+      // Avisa a la navbar para que refresque el aviso del sobre al momento.
+      window.dispatchEvent(new Event('brote:mensajes-leidos'))
+    })
+  }, [activo, mensajes, patch, usuario.id])
 
   // Agrupamos por interlocutor.
   const convs = new Map()
