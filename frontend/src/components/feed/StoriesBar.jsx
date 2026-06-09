@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Avatar from '../ui/Avatar.jsx'
 import StoryViewer from './StoryViewer.jsx'
 import { useApi } from '../../hooks/useApi.js'
@@ -7,12 +7,16 @@ import s from './StoriesBar.module.css'
 const BG_COLORS = ['#e8c5b8', '#f7e0e2', '#e7eee9', '#f4e7dc', '#e7a6ae', '#81b29a']
 
 export default function StoriesBar({ stories = [], me, onChange }) {
-  const { post, cargando } = useApi()
+  const { post, upload, cargando } = useApi()
+  const fileRef = useRef(null)
   const [viendo, setViendo] = useState(null)
   const [componiendo, setComponiendo] = useState(false)
   const [texto, setTexto] = useState('')
   const [bg, setBg] = useState(BG_COLORS[0])
   const [img, setImg] = useState('')
+  const [mediaType, setMediaType] = useState('IMAGE')
+  const [subiendo, setSubiendo] = useState(false)
+  const [errorSubida, setErrorSubida] = useState('')
 
   // Una burbuja por usuario (su historia más reciente).
   const porUsuario = []
@@ -24,6 +28,29 @@ export default function StoriesBar({ stories = [], me, onChange }) {
     }
   }
 
+  // Sube la foto/vídeo elegido en la galería y guarda su URL pública + tipo.
+  const elegirArchivo = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite reelegir el mismo archivo
+    if (!file) return
+    setErrorSubida('')
+    setSubiendo(true)
+    try {
+      const { url, mediaType: tipo } = await upload('/api/stories/upload', file)
+      setImg(url)
+      setMediaType(tipo)
+    } catch (err) {
+      setErrorSubida(err.message || 'No se pudo subir el archivo')
+    } finally {
+      setSubiendo(false)
+    }
+  }
+
+  const quitarMedia = () => {
+    setImg('')
+    setMediaType('IMAGE')
+  }
+
   const publicar = async () => {
     if (!texto.trim() && !img.trim()) return
     try {
@@ -31,9 +58,11 @@ export default function StoriesBar({ stories = [], me, onChange }) {
         text: texto.trim() || undefined,
         bgColor: bg,
         imageUrl: img.trim() || undefined,
+        mediaType: img.trim() ? mediaType : undefined,
       })
       setTexto('')
       setImg('')
+      setMediaType('IMAGE')
       setComponiendo(false)
       onChange?.()
     } catch {
@@ -63,7 +92,15 @@ export default function StoriesBar({ stories = [], me, onChange }) {
       {componiendo && (
         <div className={s.composer}>
           <div className={s.preview} style={{ background: bg }}>
-            {img ? <img src={img} alt="vista previa" /> : <span>{texto || 'Tu historia…'}</span>}
+            {img ? (
+              mediaType === 'VIDEO' ? (
+                <video src={img} controls playsInline />
+              ) : (
+                <img src={img} alt="vista previa" />
+              )
+            ) : (
+              <span>{texto || 'Tu historia…'}</span>
+            )}
           </div>
           <textarea
             placeholder="Escribe tu historia…"
@@ -71,11 +108,30 @@ export default function StoriesBar({ stories = [], me, onChange }) {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
           />
+
           <input
-            placeholder="…o pega una URL de imagen (opcional)"
-            value={img}
-            onChange={(e) => setImg(e.target.value)}
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/*"
+            hidden
+            onChange={elegirArchivo}
           />
+          <div className={s.mediaRow}>
+            <button
+              type="button"
+              className={s.galeria}
+              onClick={() => fileRef.current?.click()}
+              disabled={subiendo}
+            >
+              {subiendo ? 'Subiendo…' : img ? '🔄 Cambiar foto/vídeo' : '🖼️ Subir de la galería'}
+            </button>
+            {img && (
+              <button type="button" className={s.quitar} onClick={quitarMedia}>
+                Quitar
+              </button>
+            )}
+          </div>
+          {errorSubida && <p className={s.errorSubida}>{errorSubida}</p>}
           <div className={s.colors}>
             {BG_COLORS.map((c) => (
               <button
@@ -91,7 +147,7 @@ export default function StoriesBar({ stories = [], me, onChange }) {
             <button className={s.cancel} onClick={() => setComponiendo(false)}>
               Cancelar
             </button>
-            <button className={s.publish} onClick={publicar} disabled={cargando}>
+            <button className={s.publish} onClick={publicar} disabled={cargando || subiendo}>
               Publicar
             </button>
           </div>

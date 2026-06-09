@@ -66,6 +66,7 @@ export const storyDTO = (s) =>
   s && {
     id: s.id,
     imageUrl: s.imageUrl,
+    mediaType: s.mediaType,
     text: s.text,
     bgColor: s.bgColor,
     createdAt: s.createdAt,

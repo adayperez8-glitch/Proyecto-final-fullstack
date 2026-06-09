@@ -42,7 +42,8 @@
   padding: 24px;
   overflow: hidden;
 }
-.media img {
+.media img,
+.media video {
   position: absolute;
   inset: 0;
   width: 100%;

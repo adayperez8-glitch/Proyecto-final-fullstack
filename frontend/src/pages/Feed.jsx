@@ -77,14 +77,14 @@ export default function Feed() {
   return (
     <div className={s.page}>
       <header className={s.masthead}>
-        <span className="kicker">Tu jardín de foco</span>
-        <h1 className={s.title}>Hola,&nbsp;{usuario.displayName.split(' ')[0]}.</h1>
         <p className={s.lede}>
           {otros.length > 0
             ? `${otros.length} ${otros.length === 1 ? 'persona se enfoca' : 'personas se enfocan'} contigo ahora mismo.`
             : 'Abre tu sesión y da ejemplo. Los demás brotarán aquí.'}
         </p>
       </header>
+
+      <StoriesBar stories={stories} me={usuario} onChange={() => cargar(true)} />
 
       <MoodPicker actual={miMood} onSet={setMiMood} />
 
@@ -117,8 +117,6 @@ export default function Feed() {
       ) : (
         <StartSession onStart={(ses) => setMiSesion(ses)} />
       )}
-
-      <StoriesBar stories={stories} me={usuario} onChange={() => cargar(true)} />
 
       <div className={s.seccionHead}>
         <h2 className={s.seccion}>Enfocándose hoy</h2>

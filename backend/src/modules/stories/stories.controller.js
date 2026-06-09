@@ -10,13 +10,23 @@ async function purgeExpired() {
   await prisma.story.deleteMany({ where: { expiresAt: { lte: new Date() } } })
 }
 
+// Sube un archivo (foto o vídeo) desde la galería y devuelve su URL pública.
+// El frontend luego crea la historia con esa URL en POST /api/stories.
+export async function uploadMedia(req, res) {
+  if (!req.file) throw ApiError.badRequest('No se recibió ningún archivo')
+  const mediaType = req.file.mimetype.startsWith('video/') ? 'VIDEO' : 'IMAGE'
+  const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
+  res.status(201).json({ url, mediaType })
+}
+
 export async function createStory(req, res) {
   await purgeExpired()
-  const { imageUrl, text, bgColor } = req.body
+  const { imageUrl, text, bgColor, mediaType } = req.body
   const story = await prisma.story.create({
     data: {
       userId: req.user.id,
       imageUrl,
+      mediaType: imageUrl ? mediaType || 'IMAGE' : null,
       text,
       bgColor,
       expiresAt: new Date(Date.now() + DAY_MS),

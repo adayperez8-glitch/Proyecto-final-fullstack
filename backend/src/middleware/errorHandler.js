@@ -15,6 +15,11 @@ export function errorHandler(err, _req, res, _next) {
     err = ApiError.conflict(`Ya existe un registro con ese ${fields}`)
   } else if (err.code === 'P2025') {
     err = ApiError.notFound('Registro no encontrado')
+  } else if (err.name === 'MulterError') {
+    // Errores de subida (multer): tamaño excedido, campo inesperado, etc.
+    const msg =
+      err.code === 'LIMIT_FILE_SIZE' ? 'El archivo supera el tamaño máximo (50 MB)' : err.message
+    err = ApiError.badRequest(msg)
   }
 
   const statusCode = err.statusCode || 500

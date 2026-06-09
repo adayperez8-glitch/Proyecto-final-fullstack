@@ -107,7 +107,8 @@ model Story {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  imageUrl  String? // historia con imagen (URL)
+  imageUrl  String? // historia con imagen o vídeo (URL pública)
+  mediaType String? // "IMAGE" | "VIDEO" — cómo renderizar imageUrl (null = imagen, compat)
   text      String? // historia de texto
   bgColor   String? // color de fondo para historias de texto
   createdAt DateTime @default(now())

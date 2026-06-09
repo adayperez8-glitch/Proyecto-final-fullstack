@@ -53,7 +53,11 @@ export default function StoryViewer({ storyId, me, onClose }) {
           <>
             <div className={s.media} style={{ background: historia.bgColor || '#e8c5b8' }}>
               {historia.imageUrl ? (
-                <img src={historia.imageUrl} alt="historia" />
+                historia.mediaType === 'VIDEO' ? (
+                  <video src={historia.imageUrl} controls autoPlay playsInline />
+                ) : (
+                  <img src={historia.imageUrl} alt="historia" />
+                )
               ) : (
                 <p className={s.text}>{historia.text}</p>
               )}

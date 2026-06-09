@@ -11,15 +11,18 @@ export function useApi() {
     setCargando(true)
     setError(null)
     const token = localStorage.getItem('token')
+    // FormData (subida de archivos): el navegador pone el Content-Type con su
+    // boundary, así que no lo fijamos ni serializamos a JSON.
+    const esFormData = body instanceof FormData
 
     try {
       const res = await fetch(`${API_URL}${endpoint}`, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          ...(esFormData ? {} : { 'Content-Type': 'application/json' }),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        ...(body !== undefined ? { body: esFormData ? body : JSON.stringify(body) } : {}),
         ...rest,
       })
 
@@ -43,6 +46,15 @@ export function useApi() {
   const post = useCallback((e, body) => peticion(e, { method: 'POST', body }), [peticion])
   const patch = useCallback((e, body) => peticion(e, { method: 'PATCH', body }), [peticion])
   const del = useCallback((e) => peticion(e, { method: 'DELETE' }), [peticion])
+  // Sube un File al endpoint indicado en un campo "file" (multipart/form-data).
+  const upload = useCallback(
+    (e, file) => {
+      const fd = new FormData()
+      fd.append('file', file)
+      return peticion(e, { method: 'POST', body: fd })
+    },
+    [peticion],
+  )
 
-  return { peticion, get, post, patch, del, cargando, error }
+  return { peticion, get, post, patch, del, upload, cargando, error }
 }
