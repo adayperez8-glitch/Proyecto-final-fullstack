@@ -54,7 +54,8 @@ export default function SessionCard({ item, me }) {
     if (!mood) return
     try {
       const { reaccion } = await post('/api/reactions', { moodId: mood.id, emoji })
-      setReacciones((rs) => [...rs, reaccion])
+      // Máximo una reacción por persona: sustituye la propia si ya existía.
+      setReacciones((rs) => [...rs.filter((r) => r.from?.id !== me?.id), reaccion])
       setApoyo(false)
     } catch {
       /* hook */

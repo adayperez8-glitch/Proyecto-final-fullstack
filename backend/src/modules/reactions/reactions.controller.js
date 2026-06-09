@@ -7,10 +7,16 @@ export async function addReaction(req, res) {
   const mood = await prisma.mood.findUnique({ where: { id: moodId } })
   if (!mood) throw ApiError.notFound('Estado de ánimo no encontrado')
 
-  const reaction = await prisma.reaction.create({
-    data: { moodId, fromId: req.user.id, emoji, text },
+  // Máximo una reacción por persona y ánimo: si ya tenía la suya, se reemplaza
+  // (cambia el emoji/texto) en vez de acumular varias.
+  const existente = await prisma.reaction.findFirst({
+    where: { moodId, fromId: req.user.id },
   })
-  res.status(201).json({ reaccion: reactionDTO({ ...reaction, from: req.user }) })
+  const reaction = existente
+    ? await prisma.reaction.update({ where: { id: existente.id }, data: { emoji, text } })
+    : await prisma.reaction.create({ data: { moodId, fromId: req.user.id, emoji, text } })
+
+  res.status(existente ? 200 : 201).json({ reaccion: reactionDTO({ ...reaction, from: req.user }) })
 }
 
 export async function removeReaction(req, res) {
