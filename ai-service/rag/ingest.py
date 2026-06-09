@@ -55,6 +55,35 @@ def load_documents() -> list[Document]:
     return docs
 
 
+def _index_count(vs) -> int:
+    """Nº de fragmentos ya indexados en el vector store (0 si está vacío)."""
+    try:
+        return vs._collection.count()
+    except Exception:
+        try:
+            return len(vs.get().get("ids", []))
+        except Exception:
+            return 0
+
+
+def ensure_index() -> None:
+    """Indexa los documentos solo si el vector store está vacío.
+
+    Pensado para el arranque en hosting con disco efímero (p. ej. Render free),
+    donde el índice de Chroma no persiste entre reinicios: en cada boot se
+    reconstruye solo, sin necesidad de ejecutar `python -m rag.ingest` a mano.
+    """
+    vs = get_vectorstore()
+    count = _index_count(vs)
+    if count > 0:
+        print(f"[OK] RAG ya indexado ({count} fragmentos).")
+        return
+    docs = load_documents()
+    vs.add_documents(docs)
+    modo = "Gemini" if settings.has_ai else "FAKE (sin clave)"
+    print(f"[OK] RAG auto-indexado al arranque: {len(docs)} fragmentos. Embeddings: {modo}")
+
+
 def main() -> None:
     # Borra el índice anterior para evitar duplicados.
     persist_dir = os.path.abspath(os.path.join(HERE, "..", settings.chroma_dir))

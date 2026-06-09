@@ -18,12 +18,14 @@ from db import (
     get_messages,
     init_db,
 )
+from rag.ingest import ensure_index
 from schemas import ChatRequest, ChatResponse, HistoryResponse
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()  # crea las tablas del chat si no existen
+    ensure_index()  # reconstruye el índice RAG si está vacío (disco efímero en hosting)
     yield
 
 
