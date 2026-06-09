@@ -57,6 +57,14 @@
   color: var(--espresso);
   text-align: center;
 }
+.caption {
+  margin: 12px 2px 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .author {
   position: absolute;
   left: 14px;

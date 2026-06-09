@@ -67,6 +67,11 @@ export default function StoryViewer({ storyId, me, onClose }) {
               </div>
             </div>
 
+            {/* Pie de la historia: texto bajo la foto/vídeo cuando hay ambos. */}
+            {historia.imageUrl && historia.text && (
+              <p className={s.caption}>{historia.text}</p>
+            )}
+
             {historia.messages?.length > 0 && (
               <div className={s.publicMsgs}>
                 {historia.messages.map((m) => (
