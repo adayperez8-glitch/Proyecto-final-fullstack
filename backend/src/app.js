@@ -3,7 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import { env } from './config/env.js'
 import api from './routes.js'
-import { UPLOADS_DIR } from './middleware/upload.js'
+import { UPLOADS_DIR } from './lib/storage.js'
 import { notFound, errorHandler } from './middleware/errorHandler.js'
 
 // Crea la app Express. Separada del arranque del servidor para poder testearla con supertest.

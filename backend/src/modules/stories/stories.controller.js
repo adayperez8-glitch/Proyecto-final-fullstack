@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { persistMedia } from '../../lib/storage.js'
 import { storyDTO } from '../../utils/serializers.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -14,8 +15,7 @@ async function purgeExpired() {
 // El frontend luego crea la historia con esa URL en POST /api/stories.
 export async function uploadMedia(req, res) {
   if (!req.file) throw ApiError.badRequest('No se recibió ningún archivo')
-  const mediaType = req.file.mimetype.startsWith('video/') ? 'VIDEO' : 'IMAGE'
-  const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
+  const { url, mediaType } = await persistMedia(req.file, req)
   res.status(201).json({ url, mediaType })
 }
 
