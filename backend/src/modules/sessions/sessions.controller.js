@@ -30,10 +30,22 @@ export async function startSession(req, res) {
 }
 
 // Feed principal: quién está (o estuvo hoy) en una sesión, con su ánimo y si tiene historia.
-export async function feed(_req, res) {
+export async function feed(req, res) {
   const since = new Date(Date.now() - DAY_MS)
+
+  // Solo se ven enfocados los amigos (y la propia sesión); nada de desconocidos.
+  const amistades = await prisma.friendship.findMany({
+    where: { userId: req.user.id },
+    select: { friendId: true },
+  })
+  const visibles = [...amistades.map((a) => a.friendId), req.user.id]
+
   const sessions = await prisma.focusSession.findMany({
-    where: { startedAt: { gte: since }, status: { not: 'CANCELLED' } },
+    where: {
+      userId: { in: visibles },
+      startedAt: { gte: since },
+      status: { not: 'CANCELLED' },
+    },
     include: { user: true, ...commentsInclude },
     orderBy: [{ status: 'asc' }, { startedAt: 'desc' }],
   })
