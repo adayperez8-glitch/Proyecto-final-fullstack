@@ -10,7 +10,9 @@
   display: flex;
   gap: 14px;
   overflow-x: auto;
-  padding: 0 10px 4px;
+  /* padding-top deja sitio al anillo (box-shadow 4px) que, por el overflow-x,
+     se recortaba por arriba. */
+  padding: 6px 10px 4px;
   scrollbar-width: thin;
 }
 .row::-webkit-scrollbar {
