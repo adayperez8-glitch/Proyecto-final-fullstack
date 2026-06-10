@@ -11,8 +11,19 @@ const SUGERENCIAS = [
 ]
 
 export default function Asistente() {
-  const { mensajes, enviar, enviando, error, cargandoHistorial, nuevaConversacion } = useChat()
+  const {
+    mensajes,
+    enviar,
+    enviando,
+    error,
+    cargandoHistorial,
+    nuevaConversacion,
+    conversaciones,
+    cargarHistorial,
+    conversationId,
+  } = useChat()
   const [texto, setTexto] = useState('')
+  const [verConvs, setVerConvs] = useState(false)
   const finRef = useRef(null)
 
   // Auto-scroll al último mensaje.
@@ -26,7 +37,14 @@ export default function Asistente() {
     setTexto('')
   }
 
+  const abrirConversacion = (cid) => {
+    setVerConvs(false)
+    if (cid !== conversationId) cargarHistorial(cid)
+  }
+
   const vacio = mensajes.length === 0
+  // El "escribiendo…" solo se muestra hasta que llega el primer token del stream.
+  const esperandoRespuesta = enviando && mensajes[mensajes.length - 1]?.role === 'user'
 
   return (
     <div className={s.wrap}>
@@ -35,10 +53,38 @@ export default function Asistente() {
         <p className={s.sub}>
           Pregúntame sobre técnicas de estudio, concentración o tu propio progreso.
         </p>
-        {!vacio && (
-          <button className={s.nueva} onClick={nuevaConversacion} disabled={enviando}>
-            ✨ Nueva conversación
-          </button>
+        <div className={s.headBtns}>
+          {!vacio && (
+            <button className={s.nueva} onClick={nuevaConversacion} disabled={enviando}>
+              ✨ Nueva conversación
+            </button>
+          )}
+          {conversaciones.length > 0 && (
+            <button className={s.nueva} onClick={() => setVerConvs((v) => !v)} disabled={enviando}>
+              🗂 Conversaciones ({conversaciones.length})
+            </button>
+          )}
+        </div>
+        {verConvs && (
+          <div className={s.convList}>
+            {conversaciones.map((c) => (
+              <button
+                key={c.id}
+                className={`${s.convItem} ${c.id === conversationId ? s.convActiva : ''}`}
+                onClick={() => abrirConversacion(c.id)}
+              >
+                <span className={s.convTitle}>{c.title || 'Conversación'}</span>
+                {c.created_at && (
+                  <time className={s.convDate}>
+                    {new Date(c.created_at).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </time>
+                )}
+              </button>
+            ))}
+          </div>
         )}
       </header>
 
@@ -82,7 +128,7 @@ export default function Asistente() {
           </div>
         ))}
 
-        {enviando && (
+        {esperandoRespuesta && (
           <div className={s.rowBot}>
             <div className={`${s.bubbleBot} ${s.typing}`}>
               <span className={s.dot} />

@@ -69,6 +69,8 @@ model User {
   messagesRecv  Message[]      @relation("MessagesReceived")
   friends       Friendship[]   @relation("FriendshipUser")
   friendOf      Friendship[]   @relation("FriendshipFriend")
+  friendRequestsSent FriendRequest[] @relation("FriendRequestsSent")
+  friendRequestsRecv FriendRequest[] @relation("FriendRequestsReceived")
 }
 
 model FocusSession {
@@ -160,6 +162,21 @@ model Message {
 
   @@index([toId])
   @@index([fromId])
+}
+
+// Solicitud de amistad PENDIENTE. La amistad ya no se crea unilateralmente:
+// A solicita, B acepta (se crean las dos filas de Friendship y se borra la
+// solicitud) o rechaza (solo se borra). Una fila aquí = solicitud pendiente.
+model FriendRequest {
+  id        String   @id @default(cuid())
+  fromId    String
+  toId      String
+  from      User     @relation("FriendRequestsSent", fields: [fromId], references: [id], onDelete: Cascade)
+  to        User     @relation("FriendRequestsReceived", fields: [toId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([fromId, toId])
+  @@index([toId])
 }
 
 // Amistad mutua. Cada amistad se guarda como dos filas simétricas

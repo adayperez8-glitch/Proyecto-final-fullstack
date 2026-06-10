@@ -1,0 +1,188 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.masthead {
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--ink);
+}
+.title {
+  font-size: clamp(2.1rem, 8vw, 3rem);
+  font-weight: 900;
+  line-height: 0.98;
+  margin-top: 6px;
+}
+
+/* Tarjetas de rachas y totales */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: 18px 16px;
+  box-shadow: var(--shadow-sm);
+}
+.cardFuego {
+  border-color: var(--coral);
+  box-shadow: var(--shadow-glow);
+}
+.cardNum {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--espresso);
+}
+.cardLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.seccion {
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--line-strong);
+  margin-bottom: 14px;
+}
+
+/* Gráfica de barras de la semana (CSS puro, sin librerías) */
+.chart {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 190px;
+}
+.col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.colMin {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.barWrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.bar {
+  width: min(34px, 80%);
+  border-radius: 8px 8px 4px 4px;
+  background: var(--grad-warm);
+  box-shadow: 0 4px 10px rgba(224, 86, 59, 0.25);
+  transition: height 0.4s ease;
+}
+.colDia {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+/* Estudio vs trabajo */
+.split {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.splitBar {
+  height: 18px;
+  border-radius: var(--r-pill);
+  background: var(--latte);
+  overflow: hidden;
+  border: 1.5px solid var(--line-strong);
+}
+.splitStudy {
+  height: 100%;
+  background: var(--grad-warm);
+  transition: width 0.4s ease;
+}
+.splitLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+/* El jardín */
+.leyenda {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.garden {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.plot {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1.5px dashed var(--line);
+}
+.plotVivo {
+  background: var(--sage-soft);
+  border: 1.5px solid var(--sage);
+}
+.tierra {
+  color: var(--line-strong);
+  font-weight: 900;
+}
+
+/* Ánimos recientes */
+.animos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.animo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  font-size: 1rem;
+}
+.animo small {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 440px) {
+  .chart {
+    height: 150px;
+  }
+  .garden {
+    gap: 5px;
+  }
+  .plot {
+    font-size: 1.05rem;
+  }
+}

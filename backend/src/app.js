@@ -18,10 +18,15 @@ export function createApp() {
 
   // Archivos subidos (fotos/vídeos de historias). Servidos con CORP cross-origin
   // para que el frontend (otro puerto en local) pueda cargarlos en <img>/<video>.
+  // nosniff impide que el navegador "adivine" otro Content-Type al servirlos.
   app.use(
     '/uploads',
     express.static(UPLOADS_DIR, {
-      setHeaders: (res) => res.set('Cross-Origin-Resource-Policy', 'cross-origin'),
+      setHeaders: (res) =>
+        res.set({
+          'Cross-Origin-Resource-Policy': 'cross-origin',
+          'X-Content-Type-Options': 'nosniff',
+        }),
     }),
   )
 

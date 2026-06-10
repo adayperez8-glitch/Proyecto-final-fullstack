@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { messageDTO } from '../../utils/serializers.js'
+import { sendToUser } from '../../lib/events.js'
 
 export async function send(req, res) {
   const { toId, text, storyId, visibility } = req.body
@@ -23,17 +24,29 @@ export async function send(req, res) {
       visibility: visibility || 'PRIVATE',
     },
   })
+
+  // Aviso en tiempo real al destinatario (badge del sobre + hilo abierto).
+  sendToUser(toId, 'message', { fromId: req.user.id })
   res.status(201).json({ mensaje: messageDTO({ ...message, from: req.user, to }) })
 }
 
-// Bandeja privada: MDs enviados y recibidos por el usuario.
+// Bandeja privada: MDs enviados y recibidos por el usuario, paginados del más
+// reciente al más antiguo. `?before=<ISO>` trae la página anterior.
 export async function inbox(req, res) {
+  const limit = Math.min(Number(req.query.limit) || 100, 200)
+  const before = req.query.before ? new Date(req.query.before) : null
+
   const messages = await prisma.message.findMany({
-    where: { visibility: 'PRIVATE', OR: [{ toId: req.user.id }, { fromId: req.user.id }] },
+    where: {
+      visibility: 'PRIVATE',
+      OR: [{ toId: req.user.id }, { fromId: req.user.id }],
+      ...(before && !Number.isNaN(before.getTime()) ? { createdAt: { lt: before } } : {}),
+    },
     include: { from: true, to: true },
     orderBy: { createdAt: 'desc' },
+    take: limit,
   })
-  res.json({ mensajes: messages.map(messageDTO) })
+  res.json({ mensajes: messages.map(messageDTO), hayMas: messages.length === limit })
 }
 
 // Nº de MDs privados recibidos y aún sin leer (para el aviso de la navbar).

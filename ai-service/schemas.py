@@ -32,3 +32,13 @@ class MessageOut(BaseModel):
 class HistoryResponse(BaseModel):
     conversation_id: str
     messages: list[MessageOut]
+
+
+class ConversationOut(BaseModel):
+    id: str
+    title: str | None = None
+    created_at: datetime | None = None
+
+
+class ConversationsResponse(BaseModel):
+    conversations: list[ConversationOut]

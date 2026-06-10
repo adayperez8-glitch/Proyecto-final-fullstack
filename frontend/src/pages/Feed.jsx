@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useEvents } from '../context/EventsContext.jsx'
 import { useApi } from '../hooks/useApi.js'
+import { useCountdown } from '../hooks/useCountdown.js'
 import { Cargando, ErrorMsg, Vacio } from '../components/ui/States.jsx'
 import MoodPicker from '../components/feed/MoodPicker.jsx'
 import StartSession from '../components/feed/StartSession.jsx'
@@ -11,6 +13,7 @@ import s from './Feed.module.css'
 
 export default function Feed() {
   const { usuario } = useAuth()
+  const { subscribe } = useEvents()
   const { get, patch } = useApi()
 
   const [feed, setFeed] = useState([])
@@ -45,11 +48,21 @@ export default function Feed() {
     cargar()
   }, [cargar])
 
-  // Refresco suave de presencia y nuevas sesiones (la cuenta atrás corre en local).
+  // Tiempo real: cuando un amigo abre/cierra sesión, sube historia, cambia de
+  // ánimo o comenta, el servidor lo empuja por SSE y el feed se refresca solo.
+  useEffect(() => subscribe('feed', () => cargar(true)), [subscribe, cargar])
+
+  // Red de seguridad por si el stream SSE se cae (la cuenta atrás corre en local).
   useEffect(() => {
-    const id = setInterval(() => cargar(true), 15000)
+    const id = setInterval(() => cargar(true), 60000)
     return () => clearInterval(id)
   }, [cargar])
+
+  // Estado local de mi cuenta atrás: completar solo se habilita al llegar a
+  // cero (el backend además lo valida server-side).
+  const { done: miSesionLista } = useCountdown(miSesion?.startedAt, miSesion?.endsAt ?? 0, {
+    active: Boolean(miSesion),
+  })
 
   const terminar = async () => {
     try {
@@ -103,13 +116,19 @@ export default function Feed() {
             <span className={s.miTipo}>
               {miSesion.type === 'STUDY' ? '📚 Estudiando' : '💻 Trabajando'}
             </span>
-            <p className={s.miHint}>Tu cuenta atrás corre a la vista de todos. ¡Ánimo! 🌱</p>
+            <p className={s.miHint}>
+              {miSesionLista
+                ? '¡Tu sesión floreció! Márcala como completada 🌸'
+                : 'Tu cuenta atrás corre a la vista de tus amigos. ¡Ánimo! 🌱'}
+            </p>
             <div className={s.miBtns}>
-              <button className={s.terminar} onClick={terminar}>
-                Terminar ✓
-              </button>
+              {miSesionLista && (
+                <button className={s.terminar} onClick={terminar}>
+                  Completar ✓
+                </button>
+              )}
               <button className={s.cancelar} onClick={cancelar}>
-                Cancelar
+                {miSesionLista ? 'Descartar' : 'Cancelar'}
               </button>
             </div>
           </div>

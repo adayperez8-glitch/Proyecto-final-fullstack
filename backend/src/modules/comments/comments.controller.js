@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { commentDTO } from '../../utils/serializers.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 export async function addComment(req, res) {
   const { sessionId, text } = req.body
@@ -10,6 +11,8 @@ export async function addComment(req, res) {
   const comment = await prisma.comment.create({
     data: { sessionId, fromId: req.user.id, text },
   })
+  // El comentario flota sobre la cuenta atrás del dueño: aviso a su círculo.
+  notifyFriendsOf(session.userId, 'feed', { kind: 'comment' })
   res.status(201).json({ comentario: commentDTO({ ...comment, from: req.user }) })
 }
 

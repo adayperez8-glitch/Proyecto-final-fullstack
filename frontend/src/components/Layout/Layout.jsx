@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useEvents } from '../../context/EventsContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import Avatar from '../ui/Avatar.jsx'
 import s from './Layout.module.css'
@@ -9,29 +10,46 @@ const linkClass = ({ isActive }) => (isActive ? `${s.link} ${s.active}` : s.link
 
 export default function Layout() {
   const { usuario, logout } = useAuth()
+  const { subscribe } = useEvents()
   const { get } = useApi()
   const navigate = useNavigate()
   const location = useLocation()
   const [noLeidos, setNoLeidos] = useState(0)
+  const [solicitudes, setSolicitudes] = useState(0)
 
-  // Conteo de mensajes sin leer para el aviso del sobre: al cargar, al navegar
-  // (p. ej. al salir de la bandeja ya leída) y cada 20s.
-  useEffect(() => {
-    let activo = true
-    const cargar = () =>
+  const cargarNoLeidos = useCallback(
+    () =>
       get('/api/messages/unread-count')
-        .then((d) => activo && setNoLeidos(d.count))
-        .catch(() => {})
-    cargar()
-    const id = setInterval(cargar, 20000)
-    // La página de mensajes avisa al marcar leídos para refrescar al instante.
-    window.addEventListener('brote:mensajes-leidos', cargar)
+        .then((d) => setNoLeidos(d.count))
+        .catch(() => {}),
+    [get],
+  )
+  const cargarSolicitudes = useCallback(
+    () =>
+      get('/api/friends/requests')
+        .then((d) => setSolicitudes(d.recibidas.length))
+        .catch(() => {}),
+    [get],
+  )
+
+  // Avisos de la navbar (sobre y solicitudes): al cargar, al navegar y en
+  // tiempo real vía SSE. El polling queda como red de seguridad espaciada.
+  useEffect(() => {
+    cargarNoLeidos()
+    cargarSolicitudes()
+    const id = setInterval(() => {
+      cargarNoLeidos()
+      cargarSolicitudes()
+    }, 60000)
+    window.addEventListener('brote:mensajes-leidos', cargarNoLeidos)
     return () => {
-      activo = false
       clearInterval(id)
-      window.removeEventListener('brote:mensajes-leidos', cargar)
+      window.removeEventListener('brote:mensajes-leidos', cargarNoLeidos)
     }
-  }, [get, location.pathname])
+  }, [cargarNoLeidos, cargarSolicitudes, location.pathname])
+
+  useEffect(() => subscribe('message', cargarNoLeidos), [subscribe, cargarNoLeidos])
+  useEffect(() => subscribe('friend', cargarSolicitudes), [subscribe, cargarSolicitudes])
 
   const salir = () => {
     logout()
@@ -51,7 +69,22 @@ export default function Layout() {
               <span className={s.ico}>🏠</span>
             </NavLink>
             <NavLink to="/buscar" className={linkClass} title="Buscar gente" aria-label="Buscar">
-              <span className={s.ico}>🔍</span>
+              <span className={s.ico}>
+                🔍
+                {solicitudes > 0 && (
+                  <span className={s.badgeNum} aria-label={`${solicitudes} solicitudes de amistad`}>
+                    {solicitudes}
+                  </span>
+                )}
+              </span>
+            </NavLink>
+            <NavLink
+              to="/estadisticas"
+              className={linkClass}
+              title="Mis estadísticas"
+              aria-label="Estadísticas"
+            >
+              <span className={s.ico}>📊</span>
             </NavLink>
             <NavLink to="/mensajes" className={linkClass} title="Mensajes" aria-label="Mensajes">
               <span className={s.ico}>

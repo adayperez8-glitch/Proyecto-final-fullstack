@@ -28,6 +28,14 @@ export function useApi() {
 
       const datos = res.status === 204 ? null : await res.json().catch(() => null)
       if (!res.ok) {
+        // Token caducado o inválido → cerramos sesión y volvemos al login,
+        // en vez de dejar la app "logueada" con todas las peticiones fallando.
+        // Los endpoints de auth se excluyen: un login fallido también da 401.
+        if (res.status === 401 && !endpoint.startsWith('/api/auth/')) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('usuario')
+          window.location.assign('/login')
+        }
         const err = new Error((datos && datos.error) || 'Algo salió mal')
         err.details = datos?.details
         err.status = res.status

@@ -88,3 +88,20 @@
   background: var(--sage-soft);
   filter: none;
 }
+/* Solicitud enviada, esperando respuesta (clic = cancelar). */
+.pendiente {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px dashed var(--line-strong);
+  box-shadow: none;
+}
+.pendiente:hover:not(:disabled) {
+  border-color: var(--coral);
+  color: var(--coral);
+  filter: none;
+}
+/* Solicitud recibida: aceptar. */
+.aceptar {
+  background: var(--sage);
+  box-shadow: 0 5px 14px rgba(79, 160, 125, 0.3);
+}

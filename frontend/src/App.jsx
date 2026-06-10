@@ -7,6 +7,7 @@ import Feed from './pages/Feed.jsx'
 import Search from './pages/Search.jsx'
 import Profile from './pages/Profile.jsx'
 import Messages from './pages/Messages.jsx'
+import Stats from './pages/Stats.jsx'
 import Asistente from './pages/Asistente.jsx'
 import Admin from './pages/Admin.jsx'
 
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/buscar" element={<Search />} />
         <Route path="/u/:username" element={<Profile />} />
         <Route path="/mensajes" element={<Messages />} />
+        <Route path="/estadisticas" element={<Stats />} />
         <Route path="/asistente" element={<Asistente />} />
         <Route
           path="/admin"

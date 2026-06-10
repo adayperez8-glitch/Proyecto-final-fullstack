@@ -1,8 +1,12 @@
 # 🌱 Brote
 
-**Red social de foco.** La gente abre sesiones de estudio o trabajo con una **cuenta atrás** visible para todos, que empieza en coral y florece a verde al completarse. Comparte tu estado de ánimo, sube historias de 24 h y motívate con los demás: reacciones de apoyo, comentarios flotantes sobre la cuenta atrás y mensajes (privados o públicos).
+[![CI](https://github.com/adayperez8-glitch/Proyecto-final-fullstack/actions/workflows/ci.yml/badge.svg)](https://github.com/adayperez8-glitch/Proyecto-final-fullstack/actions/workflows/ci.yml)
 
-> Proyecto final fullstack — conecta un frontend React con un backend Node/Express/PostgreSQL. Estética cálida "café de estudio" (marrón + rosa pastel), mobile-first. Principios YAGNI / DRY / KISS.
+**Red social de foco.** La gente abre sesiones de estudio o trabajo con una **cuenta atrás** visible para sus amigos, que empieza en coral y florece a verde al completarse. Comparte tu estado de ánimo, sube historias de 24 h y motívate con los demás: reacciones de apoyo, comentarios flotantes sobre la cuenta atrás y mensajes — todo **en tiempo real** (SSE). Cada sesión completada planta un brote en tu **jardín** y alarga tu **racha** de días de foco.
+
+> Proyecto final fullstack — conecta un frontend React con un backend Node/Express/PostgreSQL. Estética cálida "café de estudio" (marrón + rosa pastel), mobile-first e instalable como **PWA**. Principios YAGNI / DRY / KISS.
+
+**🌍 En producción:** [app (Vercel)](https://proyecto-final-fullstack-2h3x.vercel.app) · [API (Render)](https://proyecto-final-fullstack-0eyv.onrender.com/health) · [IA (Render)](https://brote-ai.onrender.com/health) · BD en Neon. *(Plan free: el primer arranque puede tardar ~50 s.)*
 
 ---
 
@@ -10,12 +14,12 @@
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | React 18 · Vite · React Router v6 · Context API · CSS Modules |
-| Backend | Node.js · Express 5 · Prisma 6 (ORM) · JWT · zod · nodemailer |
-| IA | Python · FastAPI · LangGraph · ChromaDB (RAG) · Gemini |
+| Frontend | React 18 · Vite · React Router v6 · Context API · CSS Modules · PWA |
+| Backend | Node.js · Express 5 · Prisma 6 (ORM) · JWT · zod · nodemailer · SSE |
+| IA | Python · FastAPI · LangGraph · ChromaDB (RAG) · Gemini (streaming) |
 | Automatización | N8N (2 workflows) |
 | Base de datos | PostgreSQL |
-| Tests | Runner nativo de Node (`node --test`) + Supertest |
+| Tests / CI | Runner nativo de Node (`node --test`) + Supertest · GitHub Actions |
 
 ## 📁 Estructura (monorepo)
 
@@ -26,10 +30,10 @@ proyecto final fullstack/
 │   ├── src/
 │   │   ├── config/ lib/ utils/ services/ middleware/
 │   │   ├── modules/        # auth, users, sessions, moods, stories,
-│   │   │                   #   reactions, comments, messages
+│   │   │                   #   reactions, comments, messages, friends, stats
 │   │   ├── app.js  routes.js  server.js
 │   │   └── ...
-│   └── tests/              # 24 tests (lógica + API)
+│   └── tests/              # 39 tests (lógica + API + integración con BD)
 ├── frontend/               # React (Vite)
 │   └── src/
 │       ├── components/ pages/ context/ hooks/ lib/ styles/
@@ -114,15 +118,24 @@ Base: `/api`. Todas las rutas (salvo register/login) requieren `Authorization: B
 | PATCH | `/sessions/:id/cancel` | Cancelar |
 | POST | `/moods` | Fijar mi ánimo del día |
 | GET | `/moods/me` · `/moods/:id` | Mi ánimo · detalle con reacciones |
-| GET | `/stories/feed` | Historias activas (24 h) |
+| GET | `/stories/feed` | Historias activas (24 h) de mis amigos |
 | POST | `/stories` | Subir historia |
-| GET | `/stories/:id` | Historia + respuestas públicas |
+| GET | `/stories/:id` | Historia + respuestas públicas *(solo amigos)* |
 | DELETE | `/stories/:id` | Borrar historia (autor/admin) |
 | POST | `/reactions` · DELETE `/reactions/:id` | Apoyo a un ánimo |
 | POST | `/comments` · DELETE `/comments/:id` | Comentario flotante en una cuenta atrás |
 | POST | `/messages` | MD o respuesta a historia (pública/privada) |
-| GET | `/messages` | Bandeja privada |
+| GET | `/messages` | Bandeja privada (paginada: `?limit=&before=`) |
 | PATCH | `/messages/:id/read` | Marcar como leído |
+| GET | `/friends` · DELETE `/friends/:friendId` | Mis amigos · dejar de ser amigos |
+| POST | `/friends/requests` | Enviar solicitud de amistad `{ toId }` |
+| GET | `/friends/requests` | Solicitudes pendientes (recibidas y enviadas) |
+| PATCH | `/friends/requests/:id/accept` | Aceptar solicitud → nace la amistad |
+| DELETE | `/friends/requests/:id` | Rechazar/cancelar solicitud |
+| GET | `/stats/me` | Rachas, minutos por día, jardín y últimos ánimos |
+| GET | `/events?token=` | **Tiempo real (SSE):** eventos `feed`, `message`, `friend` |
+
+> 🔒 **Privacidad:** la amistad requiere solicitud + aceptación, y el contenido (sesiones, historias, ánimo) solo lo ven los amigos — la regla se aplica en *todos* los endpoints, no solo en el feed. ⏱️ **Anti-trampas:** una sesión solo puede completarse cuando su cuenta atrás llega a cero (las rachas no se pueden falsear). 🚦 Endpoints de escritura con límite de frecuencia.
 
 ### Endpoints internos (automatizaciones)
 Protegidos por cabecera `x-api-key` (no JWT). Los llama N8N — ver [n8n-workflows/](n8n-workflows/).
@@ -140,8 +153,8 @@ Dos workflows en [n8n-workflows/](n8n-workflows/) (exportados como JSON):
 Configuración e importación: [n8n-workflows/README.md](n8n-workflows/README.md).
 
 ## 🧠 Asistente de IA
-Microservicio Python ([ai-service/](ai-service/)) con un **agente LangGraph** (2 tools: RAG + datos del usuario), **memoria conversacional** y **RAG sobre ChromaDB** (5 documentos, citando fuentes). Accesible desde la ruta **`/asistente`** del frontend.
-- Endpoints: `POST /api/chat` · `GET /api/chat/history/{id}` (JWT compartido con Node).
+Microservicio Python ([ai-service/](ai-service/)) con un **agente LangGraph** (2 tools: RAG + datos del usuario), **memoria conversacional** y **RAG sobre ChromaDB** (5 documentos, citando fuentes). Accesible desde la ruta **`/asistente`** del frontend, con la respuesta **en streaming** (token a token) y lista de conversaciones para retomarlas.
+- Endpoints: `POST /api/chat` · `POST /api/chat/stream` (SSE) · `GET /api/chat/conversations` · `GET /api/chat/history/{id}` (JWT compartido con Node, rate limit por usuario).
 - **Swagger** automático en `/docs`.
 - Detalle y decisiones: [docs/USO_IA.md](docs/USO_IA.md).
 
@@ -150,21 +163,26 @@ Microservicio Python ([ai-service/](ai-service/)) con un **agente LangGraph** (2
 - **Postman**: [docs/brote.postman_collection.json](docs/brote.postman_collection.json) (Auth · Recursos · IA · Mantenimiento).
 - **Uso de IA**: [docs/USO_IA.md](docs/USO_IA.md).
 
-## 🧪 Tests
+## 🧪 Tests y CI
 ```bash
-cd backend && npm test     # 24 tests
+cd backend && npm test     # 39 tests
 ```
-Cubren la lógica de la cuenta atrás, clasificación de ánimos (coach), hashing de contraseñas, JWT, validación con zod y la API (health, 404, validación de errores).
+Cubren la lógica de la cuenta atrás, **rachas y estadísticas**, clasificación de ánimos (coach), hashing de contraseñas, JWT, validación con zod, la API (health, 404, validación de errores) y **4 tests de integración con BD real**: registro → login → reglas de sesiones → solicitudes de amistad → privacidad entre amigos (se saltan solos si no hay BD).
+
+**CI:** GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) corre los tests del backend contra un PostgreSQL efímero y el build del frontend en cada push.
 
 ---
 
-## 🗄️ Modelo de datos (7 tablas)
-`User` · `FocusSession` · `Mood` · `Story` · `Reaction` · `Comment` · `Message` — ver [backend/prisma/schema.prisma](backend/prisma/schema.prisma).
+## 🗄️ Modelo de datos (9 tablas)
+`User` · `FocusSession` · `Mood` · `Story` · `Reaction` · `Comment` · `Message` · `Friendship` · `FriendRequest` — ver [backend/prisma/schema.prisma](backend/prisma/schema.prisma).
 
-## ☁️ Despliegue
-- **Base de datos + Backend:** Railway (PostgreSQL + servicio Node). Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `SMTP_*`. Build: `npm install && npx prisma migrate deploy`. Start: `npm start`.
-- **Frontend:** Vercel o Netlify. Variable `VITE_API_URL` = URL pública del backend. Build: `npm run build`, salida `dist/`.
-- Recuerda apuntar `CORS_ORIGIN` (backend) a la URL del frontend desplegado.
+> ⚠️ Cambios de schema en las BD existentes: con SQL idempotente en [backend/prisma/sql/](backend/prisma/sql/) (`npx prisma db execute --schema prisma/schema.prisma --file ...`), no con `migrate dev`/`db push` — el ai-service tiene tablas propias (`ai_*`) fuera de Prisma y esos comandos intentarían borrarlas.
+
+## ☁️ Despliegue (producción real)
+- **Frontend:** Vercel (proyecto Vite estático, root `frontend`). Variables `VITE_API_URL` y `VITE_AI_URL` (build-time → redeploy al cambiarlas).
+- **Backend:** Render Web Service Node (root `backend`, start `npm run start:prod`). Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (URL exacta de Vercel, sin barra final), `CLOUDINARY_URL` (fotos/vídeos persistentes), `SMTP_*`.
+- **ai-service:** Render Web Service Python (root `ai-service`, start `uvicorn main:app --host 0.0.0.0 --port $PORT`). Mismo `JWT_SECRET` que el backend.
+- **Base de datos:** Neon (PostgreSQL serverless, plan free).
 
 ## 🔐 Notas
 - Contraseñas hasheadas con bcrypt; nunca se exponen.

@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { moodDTO } from '../../utils/serializers.js'
 import { moodCategory, isPositive, isSameDay } from '../../utils/mood.js'
 import { notifyMoodCoach } from '../../services/coach.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 // Registra el ánimo del usuario. El "ánimo de hoy" es siempre el más reciente.
 export async function setMood(req, res) {
@@ -31,6 +32,7 @@ export async function setMood(req, res) {
     previousWasEarlierDay: previous ? !isSameDay(previous.createdAt, created.createdAt) : false,
   }).catch(() => {})
 
+  notifyFriendsOf(req.user.id, 'feed', { kind: 'mood' })
   res.status(201).json({ mood: moodDTO({ ...created, user: req.user }) })
 }
 

@@ -27,9 +27,23 @@ function uploadToCloudinary(buffer, mediaType) {
   })
 }
 
-function saveToDisk(file, req) {
+// La extensión se deriva del mimetype declarado, NUNCA del nombre original:
+// un "foto.html" disfrazado de image/png se guardaría como .png y el estático
+// jamás lo serviría como HTML (evita XSS alojado en /uploads).
+const EXT_BY_MIME = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+  'image/avif': '.avif',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
+  'video/quicktime': '.mov',
+}
+
+function saveToDisk(file, mediaType, req) {
   mkdirSync(UPLOADS_DIR, { recursive: true })
-  const ext = extname(file.originalname).toLowerCase().slice(0, 10)
+  const ext = EXT_BY_MIME[file.mimetype] || (mediaType === 'VIDEO' ? '.mp4' : '.jpg')
   const filename = `${Date.now()}-${randomBytes(8).toString('hex')}${ext}`
   writeFileSync(join(UPLOADS_DIR, filename), file.buffer)
   return `${req.protocol}://${req.get('host')}/uploads/${filename}`
@@ -40,6 +54,6 @@ export async function persistMedia(file, req) {
   const mediaType = file.mimetype.startsWith('video/') ? 'VIDEO' : 'IMAGE'
   const url = cloudinaryEnabled
     ? await uploadToCloudinary(file.buffer, mediaType)
-    : saveToDisk(file, req)
+    : saveToDisk(file, mediaType, req)
   return { url, mediaType }
 }

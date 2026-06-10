@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { Cargando, ErrorMsg } from '../components/ui/States.jsx'
@@ -24,7 +24,9 @@ export default function Profile() {
   const [dm, setDm] = useState('')
   const [dmEnviado, setDmEnviado] = useState(false)
   const [viendo, setViendo] = useState(null)
-  const [amigo, setAmigo] = useState(false)
+  // Relación con este perfil: 'nada' | 'enviada' | 'recibida' | 'amigos'.
+  const [relacion, setRelacion] = useState('nada')
+  const [solicitudId, setSolicitudId] = useState(null)
 
   const esMio = usuario?.username === username
 
@@ -33,7 +35,16 @@ export default function Profile() {
     try {
       const { perfil } = await get(`/api/users/${username}`)
       setPerfil(perfil)
-      setAmigo(!!perfil.esAmigo)
+      setRelacion(
+        perfil.esAmigo
+          ? 'amigos'
+          : perfil.solicitudRecibida
+            ? 'recibida'
+            : perfil.solicitudEnviada
+              ? 'enviada'
+              : 'nada',
+      )
+      setSolicitudId(perfil.solicitudId || null)
       setForm({ displayName: perfil.displayName, bio: perfil.bio || '', avatarUrl: perfil.avatarUrl || '' })
       setEstado('ok')
     } catch {
@@ -89,21 +100,40 @@ export default function Profile() {
     }
   }
 
-  const toggleAmigo = async () => {
+  // Acciones de amistad. Al hacernos amigos (o dejar de serlo) recargamos el
+  // perfil: el contenido visible (historias, sesión, ánimo) cambia con la relación.
+  const accionAmistad = async () => {
     try {
-      if (amigo) {
+      if (relacion === 'amigos') {
         await del(`/api/friends/${perfil.id}`)
-        setAmigo(false)
-        setPerfil((p) => ({ ...p, numAmigos: Math.max(0, (p.numAmigos || 1) - 1) }))
+        await cargar()
+      } else if (relacion === 'enviada') {
+        await del(`/api/friends/requests/${solicitudId}`)
+        setRelacion('nada')
+        setSolicitudId(null)
+      } else if (relacion === 'recibida') {
+        await patch(`/api/friends/requests/${solicitudId}/accept`)
+        await cargar()
       } else {
-        await post('/api/friends', { friendId: perfil.id })
-        setAmigo(true)
-        setPerfil((p) => ({ ...p, numAmigos: (p.numAmigos || 0) + 1 }))
+        const d = await post('/api/friends/requests', { toId: perfil.id })
+        if (d.esAmigo) {
+          await cargar() // aceptación mutua: ya somos amigos
+        } else {
+          setRelacion('enviada')
+          setSolicitudId(d.solicitudId)
+        }
       }
     } catch {
       /* hook */
     }
   }
+
+  const textoBoton = {
+    nada: '+ Añadir amig@',
+    enviada: 'Pendiente…',
+    recibida: 'Aceptar solicitud ✓',
+    amigos: 'Amigos ✓',
+  }[relacion]
 
   if (estado === 'cargando') return <Cargando label="Cargando perfil…" />
   if (estado === 'error') return <ErrorMsg onRetry={cargar}>No encontramos a @{username}</ErrorMsg>
@@ -130,17 +160,30 @@ export default function Profile() {
       </header>
 
       {esMio ? (
-        <button className={s.editar} onClick={() => setEditando((v) => !v)}>
-          {editando ? 'Cerrar edición' : '✏️ Editar perfil'}
-        </button>
+        <div className={s.acciones}>
+          <button className={s.editar} onClick={() => setEditando((v) => !v)}>
+            {editando ? 'Cerrar edición' : '✏️ Editar perfil'}
+          </button>
+          <Link to="/estadisticas" className={s.statsLink}>
+            📊 Mis estadísticas
+          </Link>
+        </div>
       ) : (
         <div className={s.acciones}>
           <button
-            className={`${s.amigoBtn} ${amigo ? s.esAmigo : ''}`}
-            onClick={toggleAmigo}
+            className={`${s.amigoBtn} ${relacion === 'amigos' ? s.esAmigo : ''} ${relacion === 'enviada' ? s.pendiente : ''}`}
+            onClick={accionAmistad}
           >
-            {amigo ? 'Amigos ✓' : '+ Añadir amig@'}
+            {textoBoton}
           </button>
+        </div>
+      )}
+
+      {/* Contenido oculto por privacidad: solo los amigos ven su actividad. */}
+      {!esMio && perfil.privado && (
+        <div className={s.privado}>
+          🔒 Solo sus amig@s ven sus historias, su sesión y su ánimo.
+          {relacion === 'nada' && ' Envíale una solicitud para conectar.'}
         </div>
       )}
 

@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useApi } from '../hooks/useApi.js'
+import { useEvents } from '../context/EventsContext.jsx'
 import { Cargando, Vacio } from '../components/ui/States.jsx'
 import UserResult from '../components/social/UserResult.jsx'
 import s from './Search.module.css'
 
 export default function Search() {
   const { get } = useApi()
+  const { subscribe } = useEvents()
   const [q, setQ] = useState('')
   const [resultados, setResultados] = useState([])
   const [recs, setRecs] = useState([])
+  const [solicitudes, setSolicitudes] = useState([])
   const [buscando, setBuscando] = useState(false)
   const [cargandoRecs, setCargandoRecs] = useState(true)
 
@@ -19,6 +22,19 @@ export default function Search() {
       .catch(() => {})
       .finally(() => setCargandoRecs(false))
   }, [get])
+
+  // Solicitudes de amistad recibidas: al entrar y en tiempo real (SSE).
+  const cargarSolicitudes = useCallback(
+    () =>
+      get('/api/friends/requests')
+        .then((d) => setSolicitudes(d.recibidas))
+        .catch(() => {}),
+    [get],
+  )
+  useEffect(() => {
+    cargarSolicitudes()
+  }, [cargarSolicitudes])
+  useEffect(() => subscribe('friend', cargarSolicitudes), [subscribe, cargarSolicitudes])
 
   // Búsqueda con debounce de 300 ms.
   useEffect(() => {
@@ -84,6 +100,27 @@ export default function Search() {
           </div>
         )
       ) : (
+        <>
+          {solicitudes.length > 0 && (
+            <section>
+              <div className={s.seccionHead}>
+                <h2 className={s.seccion}>Solicitudes de amistad</h2>
+                <span className={s.hint}>
+                  {solicitudes.length === 1 ? 'quiere conectar contigo' : 'quieren conectar contigo'}
+                </span>
+              </div>
+              <div className={s.list}>
+                {solicitudes.map((r) => (
+                  <UserResult
+                    key={r.id}
+                    user={{ ...r.de, solicitudRecibida: true, solicitudId: r.id }}
+                    onChange={cargarSolicitudes}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
         <section>
           <div className={s.seccionHead}>
             <h2 className={s.seccion}>Quizá conozcas</h2>
@@ -98,11 +135,12 @@ export default function Search() {
           ) : (
             <div className={s.list}>
               {recs.map((u) => (
-                <UserResult key={u.id} user={u} />
+                <UserResult key={u.id} user={u} onChange={cargarSolicitudes} />
               ))}
             </div>
           )}
         </section>
+        </>
       )}
     </div>
   )

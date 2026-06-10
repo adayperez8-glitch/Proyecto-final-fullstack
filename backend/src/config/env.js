@@ -1,5 +1,11 @@
 import 'dotenv/config'
 
+// En producción el secreto JWT es obligatorio: arrancar con el valor de
+// desarrollo firmaría tokens adivinables. Mejor fallar alto y claro.
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('Falta JWT_SECRET: es obligatorio en producción')
+}
+
 // Configuración centralizada leída de variables de entorno.
 // Nada sensible vive en el código fuente (ver .env.example).
 export const env = {

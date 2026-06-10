@@ -76,6 +76,17 @@ def create_conversation(user_id: str, title: str | None = None) -> str:
     return conv_id
 
 
+def list_conversations(user_id: str) -> list[dict]:
+    """Conversaciones del usuario, de la más reciente a la más antigua."""
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            select(ai_conversations)
+            .where(ai_conversations.c.user_id == user_id)
+            .order_by(ai_conversations.c.created_at.desc())
+        ).mappings().all()
+    return [{"id": r["id"], "title": r["title"], "created_at": r["created_at"]} for r in rows]
+
+
 def conversation_owner(conversation_id: str) -> str | None:
     with get_engine().connect() as conn:
         row = conn.execute(

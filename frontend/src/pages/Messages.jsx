@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useEvents } from '../context/EventsContext.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { Cargando, ErrorMsg, Vacio } from '../components/ui/States.jsx'
 import Avatar from '../components/ui/Avatar.jsx'
@@ -8,26 +9,34 @@ import s from './Messages.module.css'
 
 export default function Messages() {
   const { usuario } = useAuth()
+  const { subscribe } = useEvents()
   const { get, post, patch } = useApi()
   const [mensajes, setMensajes] = useState([])
   const [estado, setEstado] = useState('cargando')
   const [activo, setActivo] = useState(null)
   const [texto, setTexto] = useState('')
 
-  const cargar = useCallback(async () => {
-    setEstado('cargando')
-    try {
-      const { mensajes } = await get('/api/messages')
-      setMensajes(mensajes)
-      setEstado('ok')
-    } catch {
-      setEstado('error')
-    }
-  }, [get])
+  const cargar = useCallback(
+    async (silencioso = false) => {
+      if (!silencioso) setEstado('cargando')
+      try {
+        const { mensajes } = await get('/api/messages')
+        setMensajes(mensajes)
+        setEstado('ok')
+      } catch {
+        if (!silencioso) setEstado('error')
+      }
+    },
+    [get],
+  )
 
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  // Tiempo real: al llegar un MD nuevo, la bandeja (y el hilo abierto) se
+  // actualizan al instante sin recargar la página.
+  useEffect(() => subscribe('message', () => cargar(true)), [subscribe, cargar])
 
   // Al abrir una conversación, marca como leídos sus mensajes recibidos sin leer.
   // Así desaparece el punto de la conversación y el aviso del sobre en la navbar.

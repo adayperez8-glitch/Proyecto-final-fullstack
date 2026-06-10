@@ -3,8 +3,13 @@ import { ApiError } from '../../utils/ApiError.js'
 import { computeEndsAt } from '../../utils/countdown.js'
 import { sessionDTO, moodDTO } from '../../utils/serializers.js'
 import { sendEmail, emails } from '../../services/email.js'
+import { friendIdsOf, areFriends } from '../../lib/friendships.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
+// Margen de cortesía para "completar": cubre la deriva de reloj entre el
+// navegador y el servidor, sin permitir completar una sesión a medias.
+const EARLY_COMPLETE_MARGIN_MS = 30 * 1000
 const commentsInclude = {
   comments: { include: { from: true }, orderBy: { createdAt: 'desc' }, take: 20 },
 }
@@ -26,6 +31,7 @@ export async function startSession(req, res) {
     data: { userId: req.user.id, type, goalMinutes, startedAt, endsAt },
   })
 
+  notifyFriendsOf(req.user.id, 'feed', { kind: 'session' })
   res.status(201).json({ sesion: sessionDTO({ ...session, user: req.user }) })
 }
 
@@ -34,11 +40,7 @@ export async function feed(req, res) {
   const since = new Date(Date.now() - DAY_MS)
 
   // Solo se ven enfocados los amigos (y la propia sesión); nada de desconocidos.
-  const amistades = await prisma.friendship.findMany({
-    where: { userId: req.user.id },
-    select: { friendId: true },
-  })
-  const visibles = [...amistades.map((a) => a.friendId), req.user.id]
+  const visibles = [...(await friendIdsOf(req.user.id)), req.user.id]
 
   const sessions = await prisma.focusSession.findMany({
     where: {
@@ -53,13 +55,15 @@ export async function feed(req, res) {
   const userIds = [...new Set(sessions.map((s) => s.userId))]
 
   // Último ánimo de cada usuario, con sus reacciones de apoyo (para el contador).
+  // distinct trae UNA fila por usuario (la más reciente, por el orderBy), en
+  // lugar de cargar todo el historial de ánimos para quedarnos con la primera.
   const moods = await prisma.mood.findMany({
     where: { userId: { in: userIds } },
     orderBy: { createdAt: 'desc' },
+    distinct: ['userId'],
     include: { reactions: { include: { from: true } } },
   })
-  const moodByUser = new Map()
-  for (const m of moods) if (!moodByUser.has(m.userId)) moodByUser.set(m.userId, m)
+  const moodByUser = new Map(moods.map((m) => [m.userId, m]))
 
   // Usuarios con historia activa (no expirada).
   const stories = await prisma.story.findMany({
@@ -92,6 +96,10 @@ export async function getOne(req, res) {
     include: { user: true, comments: { include: { from: true }, orderBy: { createdAt: 'desc' } } },
   })
   if (!session) throw ApiError.notFound('Sesión no encontrada')
+  // Misma regla de privacidad que el feed: solo amigos (o el dueño).
+  if (!(await areFriends(req.user.id, session.userId))) {
+    throw ApiError.forbidden('Solo los amigos pueden ver esta sesión')
+  }
   res.json({ sesion: sessionDTO(session) })
 }
 
@@ -100,6 +108,15 @@ async function endSession(req, status, sendMail) {
   if (!session) throw ApiError.notFound('Sesión no encontrada')
   if (session.userId !== req.user.id) throw ApiError.forbidden('Esta sesión no es tuya')
   if (session.status !== 'ACTIVE') throw ApiError.badRequest('La sesión ya no está activa')
+
+  // Completar exige que la cuenta atrás haya llegado (casi) a cero: sin esto,
+  // cualquiera "florecería" una sesión de 8h en 10 segundos y las rachas y
+  // estadísticas serían trucables. Cancelar sí se permite en cualquier momento.
+  if (status === 'COMPLETED' && session.endsAt.getTime() - Date.now() > EARLY_COMPLETE_MARGIN_MS) {
+    throw ApiError.badRequest(
+      'La sesión aún no ha terminado. Espera a que la cuenta atrás llegue a cero o cancélala.',
+    )
+  }
 
   const updated = await prisma.focusSession.update({
     where: { id: session.id },
@@ -118,6 +135,7 @@ async function endSession(req, status, sendMail) {
       console.error('email sesión:', e.message),
     )
   }
+  notifyFriendsOf(req.user.id, 'feed', { kind: 'session' })
   return sessionDTO({ ...updated, user: req.user })
 }
 

@@ -2,6 +2,8 @@ import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { persistMedia } from '../../lib/storage.js'
 import { storyDTO } from '../../utils/serializers.js'
+import { friendIdsOf, areFriends } from '../../lib/friendships.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -32,6 +34,7 @@ export async function createStory(req, res) {
       expiresAt: new Date(Date.now() + DAY_MS),
     },
   })
+  notifyFriendsOf(req.user.id, 'feed', { kind: 'story' })
   res.status(201).json({ historia: storyDTO({ ...story, user: req.user }) })
 }
 
@@ -40,11 +43,7 @@ export async function feed(req, res) {
   await purgeExpired()
 
   // Solo se ven historias de amigos (y las propias); nada de desconocidos.
-  const amistades = await prisma.friendship.findMany({
-    where: { userId: req.user.id },
-    select: { friendId: true },
-  })
-  const visibles = [...amistades.map((a) => a.friendId), req.user.id]
+  const visibles = [...(await friendIdsOf(req.user.id)), req.user.id]
 
   const stories = await prisma.story.findMany({
     where: { userId: { in: visibles }, expiresAt: { gt: new Date() } },
@@ -69,6 +68,10 @@ export async function getOne(req, res) {
   })
   // Una historia caducada (>24 h) se trata como inexistente.
   if (!story || story.expiresAt <= new Date()) throw ApiError.notFound('Historia no encontrada')
+  // Misma regla de privacidad que el feed: solo amigos (o el dueño).
+  if (!(await areFriends(req.user.id, story.userId))) {
+    throw ApiError.forbidden('Solo los amigos pueden ver esta historia')
+  }
   res.json({ historia: storyDTO(story) })
 }
 

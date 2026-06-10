@@ -76,6 +76,41 @@
   background: var(--sage-soft);
   filter: none;
 }
+/* Solicitud enviada, esperando respuesta (clic = cancelar). */
+.pendiente {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px dashed var(--line-strong);
+  box-shadow: none;
+}
+.pendiente:hover {
+  border-color: var(--coral);
+  color: var(--coral);
+  filter: none;
+}
+.privado {
+  background: var(--surface-2);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+.statsLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.statsLink:hover {
+  border-color: var(--sage);
+  color: var(--sage);
+  text-decoration: none;
+}
 .admin {
   display: inline-block;
   margin-top: 8px;

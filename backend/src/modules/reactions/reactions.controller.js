@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { reactionDTO } from '../../utils/serializers.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 export async function addReaction(req, res) {
   const { moodId, emoji, text } = req.body
@@ -16,6 +17,7 @@ export async function addReaction(req, res) {
     ? await prisma.reaction.update({ where: { id: existente.id }, data: { emoji, text } })
     : await prisma.reaction.create({ data: { moodId, fromId: req.user.id, emoji, text } })
 
+  notifyFriendsOf(mood.userId, 'feed', { kind: 'reaction' })
   res.status(existente ? 200 : 201).json({ reaccion: reactionDTO({ ...reaction, from: req.user }) })
 }
 

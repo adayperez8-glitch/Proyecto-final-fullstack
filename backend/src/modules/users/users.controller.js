@@ -1,17 +1,34 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { persistMedia } from '../../lib/storage.js'
+import { friendIdsOf } from '../../lib/friendships.js'
 import { publicUser, privateUser, sessionDTO, moodDTO, storyDTO } from '../../utils/serializers.js'
 
 const ONLINE_MIN = 5
 const onlineThreshold = () => new Date(Date.now() - ONLINE_MIN * 60 * 1000)
 const isOnline = (user) => user.lastSeenAt > onlineThreshold()
 
-// IDs de los amigos de un usuario.
-async function myFriendIds(userId) {
-  const rows = await prisma.friendship.findMany({ where: { userId }, select: { friendId: true } })
-  return rows.map((r) => r.friendId)
+// Solicitudes de amistad pendientes entre yo y un conjunto de usuarios:
+// las que les envié (toId → id) y las que me enviaron (fromId → id).
+async function requestStateFor(meId, ids) {
+  if (!ids.length) return { enviadas: new Map(), recibidas: new Map() }
+  const [sent, received] = await Promise.all([
+    prisma.friendRequest.findMany({ where: { fromId: meId, toId: { in: ids } } }),
+    prisma.friendRequest.findMany({ where: { toId: meId, fromId: { in: ids } } }),
+  ])
+  return {
+    enviadas: new Map(sent.map((r) => [r.toId, r.id])),
+    recibidas: new Map(received.map((r) => [r.fromId, r.id])),
+  }
 }
+
+// Campos de relación que el frontend necesita para pintar el botón de amistad.
+const relationFields = (u, friendSet, reqs) => ({
+  esAmigo: friendSet.has(u.id),
+  solicitudEnviada: reqs.enviadas.has(u.id),
+  solicitudRecibida: reqs.recibidas.has(u.id),
+  solicitudId: reqs.recibidas.get(u.id) || reqs.enviadas.get(u.id) || null,
+})
 
 // Lista de usuarios. Admin ve además email y fecha de alta.
 export async function list(req, res) {
@@ -50,9 +67,10 @@ export async function search(req, res) {
     take: 20,
   })
 
-  const friendIds = await myFriendIds(req.user.id)
+  const friendIds = await friendIdsOf(req.user.id)
   const friendSet = new Set(friendIds)
   const ids = found.map((u) => u.id)
+  const reqs = await requestStateFor(req.user.id, ids)
 
   // Amigos en común de cada resultado = amigos suyos que también son míos.
   const mutual =
@@ -69,7 +87,7 @@ export async function search(req, res) {
     usuarios: found.map((u) => ({
       ...publicUser(u),
       online: isOnline(u),
-      esAmigo: friendSet.has(u.id),
+      ...relationFields(u, friendSet, reqs),
       amigosEnComun: mutualByUser.get(u.id) || 0,
     })),
   })
@@ -77,7 +95,8 @@ export async function search(req, res) {
 
 // Recomendaciones: amigos de tus amigos, ordenados por amigos en común (desc).
 export async function recommendations(req, res) {
-  const friendIds = await myFriendIds(req.user.id)
+  const friendIds = await friendIdsOf(req.user.id)
+  const friendSet = new Set(friendIds)
   let recs = []
 
   if (friendIds.length) {
@@ -90,13 +109,21 @@ export async function recommendations(req, res) {
     })
     const ids = grouped.map((g) => g.friendId)
     if (ids.length) {
-      const users = await prisma.user.findMany({ where: { id: { in: ids } } })
+      const [users, reqs] = await Promise.all([
+        prisma.user.findMany({ where: { id: { in: ids } } }),
+        requestStateFor(req.user.id, ids),
+      ])
       const byId = new Map(users.map((u) => [u.id, u]))
       recs = grouped
         .map((g) => {
           const u = byId.get(g.friendId)
           return u
-            ? { ...publicUser(u), online: isOnline(u), amigosEnComun: g._count.userId }
+            ? {
+                ...publicUser(u),
+                online: isOnline(u),
+                ...relationFields(u, friendSet, reqs),
+                amigosEnComun: g._count.userId,
+              }
             : null
         })
         .filter(Boolean)
@@ -105,46 +132,65 @@ export async function recommendations(req, res) {
 
   // Si aún no tienes amigos, sugerimos caras nuevas de la comunidad.
   if (recs.length === 0) {
-    const friendSet = new Set(friendIds)
     const recientes = await prisma.user.findMany({
       where: { id: { not: req.user.id } },
       orderBy: { createdAt: 'desc' },
       take: 8,
     })
-    recs = recientes
-      .filter((u) => !friendSet.has(u.id))
-      .map((u) => ({ ...publicUser(u), online: isOnline(u), amigosEnComun: 0 }))
+    const nuevos = recientes.filter((u) => !friendSet.has(u.id))
+    const reqs = await requestStateFor(req.user.id, nuevos.map((u) => u.id))
+    recs = nuevos.map((u) => ({
+      ...publicUser(u),
+      online: isOnline(u),
+      ...relationFields(u, friendSet, reqs),
+      amigosEnComun: 0,
+    }))
   }
 
   res.json({ usuarios: recs })
 }
 
-// Perfil público con su sesión activa, ánimo e historias.
+// Perfil público. La sesión activa, el ánimo y las historias siguen la misma
+// regla de privacidad que el feed: solo las ven los amigos (o el propio dueño).
 export async function profile(req, res) {
   const user = await prisma.user.findUnique({ where: { username: req.params.username } })
   if (!user) throw ApiError.notFound('Usuario no encontrado')
 
-  const myIds = await myFriendIds(req.user.id)
-  const [session, mood, stories, numAmigos, comunes] = await Promise.all([
-    prisma.focusSession.findFirst({ where: { userId: user.id, status: 'ACTIVE' } }),
-    prisma.mood.findFirst({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } }),
-    prisma.story.findMany({
-      where: { userId: user.id, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    }),
+  const myIds = await friendIdsOf(req.user.id)
+  const esAmigo = myIds.includes(user.id)
+  const esMio = user.id === req.user.id
+  const puedeVer = esAmigo || esMio
+
+  const [session, mood, stories, numAmigos, comunes, reqs] = await Promise.all([
+    puedeVer
+      ? prisma.focusSession.findFirst({ where: { userId: user.id, status: 'ACTIVE' } })
+      : null,
+    puedeVer
+      ? prisma.mood.findFirst({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } })
+      : null,
+    puedeVer
+      ? prisma.story.findMany({
+          where: { userId: user.id, expiresAt: { gt: new Date() } },
+          orderBy: { createdAt: 'desc' },
+        })
+      : [],
     prisma.friendship.count({ where: { userId: user.id } }),
     myIds.length
       ? prisma.friendship.count({ where: { userId: user.id, friendId: { in: myIds } } })
       : Promise.resolve(0),
+    requestStateFor(req.user.id, esMio ? [] : [user.id]),
   ])
 
   res.json({
     perfil: {
       ...publicUser(user),
       online: isOnline(user),
-      esAmigo: myIds.includes(user.id),
+      ...relationFields(user, new Set(myIds), reqs),
       numAmigos,
       amigosEnComun: comunes,
+      // true cuando el contenido está oculto por no ser amigos (para que el
+      // frontend explique el porqué en vez de mostrar un perfil "vacío").
+      privado: !puedeVer,
       sesionActiva: session ? sessionDTO({ ...session, user }) : null,
       mood: mood ? moodDTO({ ...mood, user }) : null,
       historias: stories.map((s) => storyDTO({ ...s, user })),
