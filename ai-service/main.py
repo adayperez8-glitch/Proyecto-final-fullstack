@@ -44,9 +44,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS_ORIGIN admite varios orígenes separados por coma (igual que el backend).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.cors_origin],
+    allow_origins=[o.strip() for o in settings.cors_origin.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

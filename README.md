@@ -6,7 +6,7 @@
 
 > Proyecto final fullstack — conecta un frontend React con un backend Node/Express/PostgreSQL. Estética cálida "café de estudio" (marrón + rosa pastel), mobile-first e instalable como **PWA**. Principios YAGNI / DRY / KISS.
 
-**🌍 En producción:** [app (Vercel)](https://proyecto-final-fullstack-2h3x.vercel.app) · [API (Render)](https://proyecto-final-fullstack-0eyv.onrender.com/health) · [IA (Render)](https://brote-ai.onrender.com/health) · BD en Neon. *(Plan free: el primer arranque puede tardar ~50 s.)*
+**🌍 En producción:** [app (Vercel)](https://brotes.vercel.app) · [API (Render)](https://proyecto-final-fullstack-0eyv.onrender.com/health) · [IA (Render)](https://brote-ai.onrender.com/health) · BD en Neon. *(Plan free: el primer arranque puede tardar ~50 s.)*
 
 ---
 

@@ -11,7 +11,11 @@ export function createApp() {
   const app = express()
 
   app.use(helmet())
-  app.use(cors({ origin: env.corsOrigin, credentials: true }))
+  // CORS_ORIGIN admite varios orígenes separados por coma (p.ej. el dominio
+  // nuevo y el antiguo de Vercel durante una migración).
+  app.use(
+    cors({ origin: env.corsOrigin.split(',').map((o) => o.trim()), credentials: true }),
+  )
   app.use(express.json({ limit: '1mb' }))
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'brote-api' }))
