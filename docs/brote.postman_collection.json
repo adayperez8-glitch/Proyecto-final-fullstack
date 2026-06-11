@@ -9,6 +9,7 @@
     { "key": "aiUrl", "value": "http://localhost:8000" },
     { "key": "token", "value": "" },
     { "key": "conversationId", "value": "" },
+    { "key": "requestId", "value": "" },
     { "key": "internalApiKey", "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY" }
   ],
   "item": [
@@ -96,6 +97,111 @@
             "url": { "raw": "{{nodeUrl}}/api/moods", "host": ["{{nodeUrl}}"], "path": ["api", "moods"] },
             "body": { "mode": "raw", "raw": "{\n  \"mood\": \"FRUSTRADO\",\n  \"note\": \"Día difícil\"\n}" }
           }
+        },
+        {
+          "name": "Mi ánimo (con apoyos del coach)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/moods/me", "host": ["{{nodeUrl}}"], "path": ["api", "moods", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Amigos (solicitudes)",
+      "item": [
+        {
+          "name": "Enviar solicitud de amistad",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{nodeUrl}}/api/friends/requests", "host": ["{{nodeUrl}}"], "path": ["api", "friends", "requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"toId\": \"ID_DEL_USUARIO\"\n}" }
+          }
+        },
+        {
+          "name": "Solicitudes pendientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.recibidas && data.recibidas[0]) { pm.collectionVariables.set('requestId', data.recibidas[0].id); }",
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/friends/requests", "host": ["{{nodeUrl}}"], "path": ["api", "friends", "requests"] }
+          }
+        },
+        {
+          "name": "Aceptar solicitud",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{nodeUrl}}/api/friends/requests/{{requestId}}/accept",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "friends", "requests", "{{requestId}}", "accept"]
+            }
+          }
+        },
+        {
+          "name": "Rechazar / cancelar solicitud",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{nodeUrl}}/api/friends/requests/{{requestId}}",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "friends", "requests", "{{requestId}}"]
+            }
+          }
+        },
+        {
+          "name": "Mis amigos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/friends", "host": ["{{nodeUrl}}"], "path": ["api", "friends"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Estadísticas y tiempo real",
+      "item": [
+        {
+          "name": "Mis estadísticas (rachas + jardín)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{nodeUrl}}/api/stats/me", "host": ["{{nodeUrl}}"], "path": ["api", "stats", "me"] }
+          }
+        },
+        {
+          "name": "Eventos en vivo (SSE, stream abierto)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{nodeUrl}}/api/events?token={{token}}",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "events"],
+              "query": [{ "key": "token", "value": "{{token}}" }]
+            },
+            "description": "Stream SSE: queda abierto y van llegando eventos 'feed', 'message' y 'friend'. El token va por query porque EventSource no admite cabeceras."
+          }
         }
       ]
     },
@@ -131,6 +237,30 @@
           }
         },
         {
+          "name": "Chat en STREAMING (SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{aiUrl}}/api/chat/stream", "host": ["{{aiUrl}}"], "path": ["api", "chat", "stream"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Dame una técnica para concentrarme\",\n  \"conversation_id\": null\n}"
+            },
+            "description": "La respuesta llega como SSE: evento 'meta' (conversation_id), eventos 'token' (texto troceado) y 'done' (fuentes citadas)."
+          }
+        },
+        {
+          "name": "Mis conversaciones",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{aiUrl}}/api/chat/conversations", "host": ["{{aiUrl}}"], "path": ["api", "chat", "conversations"] }
+          }
+        },
+        {
           "name": "Historial de conversación",
           "request": {
             "method": "GET",
@@ -156,6 +286,25 @@
               "raw": "{{nodeUrl}}/api/maintenance/stories/cleanup",
               "host": ["{{nodeUrl}}"],
               "path": ["api", "maintenance", "stories", "cleanup"]
+            }
+          }
+        },
+        {
+          "name": "Reacción del coach (la llama N8N)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{internalApiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{nodeUrl}}/api/maintenance/coach/reaction",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "maintenance", "coach", "reaction"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moodId\": \"ID_DEL_ANIMO\",\n  \"emoji\": \"🌿\",\n  \"text\": \"Días así también cuentan. Respira, ve a tu ritmo 🌱\"\n}"
             }
           }
         }
