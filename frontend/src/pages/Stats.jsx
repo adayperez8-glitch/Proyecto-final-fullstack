@@ -135,10 +135,8 @@ export default function Stats() {
 
           {/* El jardín: últimas 4 semanas */}
           <section>
-            <h2 className={s.seccion}>El jardín (últimas 4 semanas)</h2>
-            <p className={s.leyenda}>
-              Cada parcela es un día (hoy arriba a la izquierda): 🌱 &lt;1h · 🌿 1-3h · 🌺 3-6h · 🌳 +6h
-            </p>
+            <h2 className={s.seccion}>El jardín</h2>
+            <p className={s.leyenda}>🌱 &lt;1h · 🌿 1-3h · 🌺 3-6h · 🌳 +6h</p>
             <div className={s.garden} role="img" aria-label="Jardín: una planta por cada día con foco, del más reciente al más antiguo">
               {jardin.map((d) => {
                 const planta = plantaDelDia(d.minutos)
