@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Brote — API + IA",
-    "description": "Colección de la API (backend Node) y el microservicio de IA (FastAPI).\n\nVariables:\n- nodeUrl: backend Express (http://localhost:3000)\n- aiUrl: servicio de IA (http://localhost:8000)\n- token: se rellena solo al hacer Login\n- conversationId: se rellena solo al usar el chat\n- internalApiKey: para los endpoints de mantenimiento (= INTERNAL_API_KEY)",
+    "description": "Colección de la API (backend Node) y el microservicio de IA (FastAPI).\n\nVariables:\n- nodeUrl: backend Express (http://localhost:3000)\n- aiUrl: servicio de IA (http://localhost:8000)\n- token: se rellena solo al hacer Login\n- conversationId: se rellena solo al usar el chat\n- requestId: se rellena solo al listar solicitudes de amistad",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -9,8 +9,7 @@
     { "key": "aiUrl", "value": "http://localhost:8000" },
     { "key": "token", "value": "" },
     { "key": "conversationId", "value": "" },
-    { "key": "requestId", "value": "" },
-    { "key": "internalApiKey", "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY" }
+    { "key": "requestId", "value": "" }
   ],
   "item": [
     {
@@ -87,7 +86,7 @@
           }
         },
         {
-          "name": "Fijar ánimo (dispara coach N8N)",
+          "name": "Fijar mi ánimo del día",
           "request": {
             "method": "POST",
             "header": [
@@ -269,42 +268,6 @@
               "raw": "{{aiUrl}}/api/chat/history/{{conversationId}}",
               "host": ["{{aiUrl}}"],
               "path": ["api", "chat", "history", "{{conversationId}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Mantenimiento (N8N)",
-      "item": [
-        {
-          "name": "Limpieza de historias",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "x-api-key", "value": "{{internalApiKey}}" }],
-            "url": {
-              "raw": "{{nodeUrl}}/api/maintenance/stories/cleanup",
-              "host": ["{{nodeUrl}}"],
-              "path": ["api", "maintenance", "stories", "cleanup"]
-            }
-          }
-        },
-        {
-          "name": "Reacción del coach (la llama N8N)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "x-api-key", "value": "{{internalApiKey}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{nodeUrl}}/api/maintenance/coach/reaction",
-              "host": ["{{nodeUrl}}"],
-              "path": ["api", "maintenance", "coach", "reaction"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"moodId\": \"ID_DEL_ANIMO\",\n  \"emoji\": \"🌿\",\n  \"text\": \"Días así también cuentan. Respira, ve a tu ritmo 🌱\"\n}"
             }
           }
         }

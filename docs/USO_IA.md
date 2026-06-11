@@ -42,30 +42,14 @@ React (/asistente) ──JWT──> ai-service (FastAPI + LangGraph)
 ### Decisión técnica destacable
 El microservicio es **independiente** del backend Node pero **comparte el `JWT_SECRET` y la base de datos**: así reutiliza la autenticación existente (sin duplicar usuarios) y el agente puede leer los datos reales del usuario para dar respuestas personalizadas, manteniendo cada backend en su lenguaje idóneo (Node para CRUD, Python para IA).
 
-## 2. Coach de ánimo (automatización con IA)
-
-Cuando un usuario registra un **ánimo negativo**, un workflow de **N8N** genera un mensaje de apoyo:
-- Lógica condicional (**Switch** + **IF**) decide el tipo de mensaje. La variante
-  "ayer fue positivo" usa el **último ánimo de un día anterior** (no el
-  inmediatamente previo), para que registrar varios ánimos hoy no la tape.
-- El texto se genera con **IA (OpenAI) con _fallback_ a plantilla** si el LLM no
-  está disponible (o si N8N bloquea `$env`, comportamiento por defecto en 2.x).
-- Se publica como reacción del bot **Brote** sobre el ánimo y **se muestra en la
-  app**: el dueño lo ve en la tarjeta verde bajo "¿Cómo te sientes hoy?" del feed
-  (llega en vivo por SSE) y sus amigos lo ven sobre su tarjeta de sesión.
-
-Detalle en [n8n-workflows/README.md](../n8n-workflows/README.md).
-
-## 3. Uso de IA en el desarrollo
+## 2. Uso de IA en el desarrollo
 
 El proyecto se desarrolló con asistencia de IA (Claude Code) para scaffolding, revisión y documentación. Todo el código fue revisado y probado (tests del backend + smoke test del servicio de IA).
 
-## 4. Cómo probarlo
+## 3. Cómo probarlo
 1. Backend Node en marcha (`npm run dev`) con la BD sembrada (`npm run seed`).
 2. Servicio de IA en marcha (`uvicorn main:app --port 8000`) tras `python -m rag.ingest`.
 3. Frontend (`npm run dev`) → entra en **/asistente** y pregunta, p.ej.:
    - *"¿Cómo dejo de procrastinar?"* → respuesta con **fuentes citadas** (RAG),
      apareciendo **en streaming** (token a token).
    - *"¿Cómo va mi semana de foco?"* → usa la tool de **BD** con tus datos reales.
-4. Para el coach de ánimo: `n8n start` y registra un ánimo negativo en el feed —
-   en unos segundos aparece el mensaje del bot Brote bajo tu selector de ánimo.

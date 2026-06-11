@@ -10,7 +10,7 @@
     transform 0.2s ease;
 }
 
-/* Apoyo con mensaje (p.ej. el coach Brote) sobre el ánimo de la tarjeta */
+/* Apoyo con mensaje de texto sobre el ánimo de la tarjeta */
 .apoyoTxt {
   background: var(--sage-soft);
   border-left: 3px solid var(--sage);

@@ -126,7 +126,7 @@ export default function SessionCard({ item, me }) {
             </div>
           )}
 
-          {/* Apoyos con mensaje (p.ej. el coach Brote de n8n) */}
+          {/* Apoyos que incluyen un mensaje de texto */}
           {reacciones
             .filter((r) => r.text)
             .map((r) => (

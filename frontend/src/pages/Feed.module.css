@@ -88,7 +88,7 @@
   color: var(--coral);
 }
 
-/* Apoyos sobre mi ánimo (reacciones de amigos + mensaje del coach) */
+/* Apoyos sobre mi ánimo (reacciones de amigos) */
 .apoyos {
   display: flex;
   flex-direction: column;

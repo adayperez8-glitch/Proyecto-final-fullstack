@@ -16,13 +16,6 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   jwtSecret: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  // Clave para los endpoints internos que llaman las automatizaciones (N8N).
-  // No es JWT de usuario: se valida con la cabecera x-api-key.
-  internalApiKey: process.env.INTERNAL_API_KEY || '',
-  // Coach de ánimo: webhook de N8N al que avisamos cuando alguien fija su ánimo.
-  coach: {
-    webhookUrl: process.env.MOOD_COACH_WEBHOOK_URL || '',
-  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,

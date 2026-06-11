@@ -33,18 +33,6 @@ async function main() {
     ),
   )
 
-  // Usuario-bot del "coach de ánimo": firma los mensajes de apoyo que la
-  // automatización de N8N crea cuando alguien registra un ánimo negativo.
-  await prisma.user.create({
-    data: {
-      username: 'brote',
-      displayName: 'Brote 🌱',
-      email: 'brote@brote.app',
-      passwordHash,
-      bio: 'Tu compañero de foco. Te animo cuando lo necesitas 🌱',
-    },
-  })
-
   // ── Sesiones de foco en distintos puntos del countdown ────────
   const sBig = await prisma.focusSession.create({
     data: {

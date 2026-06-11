@@ -17,7 +17,7 @@
 | Frontend | React 18 · Vite · React Router v6 · Context API · CSS Modules · PWA |
 | Backend | Node.js · Express 5 · Prisma 6 (ORM) · JWT · zod · nodemailer · SSE |
 | IA | Python · FastAPI · LangGraph · ChromaDB (RAG) · Gemini (streaming) |
-| Automatización | N8N (2 workflows) |
+| Integración externa | Email transaccional (nodemailer) |
 | Base de datos | PostgreSQL |
 | Tests / CI | Runner nativo de Node (`node --test`) + Supertest · GitHub Actions |
 
@@ -33,7 +33,7 @@ proyecto final fullstack/
 │   │   │                   #   reactions, comments, messages, friends, stats
 │   │   ├── app.js  routes.js  server.js
 │   │   └── ...
-│   └── tests/              # 39 tests (lógica + API + integración con BD)
+│   └── tests/              # 37 tests (lógica + API + integración con BD)
 ├── frontend/               # React (Vite)
 │   └── src/
 │       ├── components/ pages/ context/ hooks/ lib/ styles/
@@ -41,7 +41,6 @@ proyecto final fullstack/
 ├── ai-service/             # Microservicio de IA (FastAPI + LangGraph + RAG)
 │   ├── agent/  rag/  main.py  config.py  db.py  auth.py
 │   └── README.md
-├── n8n-workflows/          # Automatizaciones N8N (JSON + guía)
 ├── docs/                   # Postman + uso de IA
 │   ├── brote.postman_collection.json
 │   └── USO_IA.md
@@ -137,20 +136,8 @@ Base: `/api`. Todas las rutas (salvo register/login) requieren `Authorization: B
 
 > 🔒 **Privacidad:** la amistad requiere solicitud + aceptación, y el contenido (sesiones, historias, ánimo) solo lo ven los amigos — la regla se aplica en *todos* los endpoints, no solo en el feed. ⏱️ **Anti-trampas:** una sesión solo puede completarse cuando su cuenta atrás llega a cero (las rachas no se pueden falsear). 🚦 Endpoints de escritura con límite de frecuencia.
 
-### Endpoints internos (automatizaciones)
-Protegidos por cabecera `x-api-key` (no JWT). Los llama N8N — ver [n8n-workflows/](n8n-workflows/).
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/maintenance/stories/cleanup` | Borra historias expiradas (>24 h), devuelve `{ deleted }` |
-| POST | `/maintenance/coach/reaction` | Crea la reacción de apoyo del bot **Brote** sobre un ánimo |
-
-## 🤖 Automatizaciones (N8N)
-Dos workflows en [n8n-workflows/](n8n-workflows/) (exportados como JSON):
-- **Limpieza de historias** — cron horario + nodo **IF**: borra las historias de >24 h.
-- **Coach de ánimo** — webhook desde `POST /moods` + **Switch** (ánimo negativo) e **IF** (ayer fue positivo): el bot **Brote** deja un mensaje de apoyo sobre tu ánimo, generado con **IA y fallback a plantilla**.
-
-Configuración e importación: [n8n-workflows/README.md](n8n-workflows/README.md).
+## ✉️ Integración externa (email)
+Emails transaccionales con **nodemailer**: bienvenida al registrarse y celebración al completar una sesión de foco. En desarrollo sin SMTP configurado, se imprimen por consola (no rompe nada). Las historias caducadas (>24 h) se purgan de forma perezosa al leer/crear historias, sin procesos externos.
 
 ## 🧠 Asistente de IA
 Microservicio Python ([ai-service/](ai-service/)) con un **agente LangGraph** (2 tools: RAG + datos del usuario), **memoria conversacional** y **RAG sobre ChromaDB** (5 documentos, citando fuentes). Accesible desde la ruta **`/asistente`** del frontend, con la respuesta **en streaming** (token a token) y lista de conversaciones para retomarlas.
@@ -160,14 +147,14 @@ Microservicio Python ([ai-service/](ai-service/)) con un **agente LangGraph** (2
 
 ## 📚 Documentación
 - **Swagger** del servicio de IA: `http://localhost:8000/docs`.
-- **Postman**: [docs/brote.postman_collection.json](docs/brote.postman_collection.json) (Auth · Recursos · IA · Mantenimiento).
+- **Postman**: [docs/brote.postman_collection.json](docs/brote.postman_collection.json) (Auth · Recursos · Amigos · Estadísticas · IA).
 - **Uso de IA**: [docs/USO_IA.md](docs/USO_IA.md).
 
 ## 🧪 Tests y CI
 ```bash
-cd backend && npm test     # 39 tests
+cd backend && npm test     # 37 tests
 ```
-Cubren la lógica de la cuenta atrás, **rachas y estadísticas**, clasificación de ánimos (coach), hashing de contraseñas, JWT, validación con zod, la API (health, 404, validación de errores) y **4 tests de integración con BD real**: registro → login → reglas de sesiones → solicitudes de amistad → privacidad entre amigos (se saltan solos si no hay BD).
+Cubren la lógica de la cuenta atrás, **rachas y estadísticas**, hashing de contraseñas, JWT, validación con zod, la API (health, 404, validación de errores) y **4 tests de integración con BD real**: registro → login → reglas de sesiones → solicitudes de amistad → privacidad entre amigos (se saltan solos si no hay BD).
 
 **CI:** GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) corre los tests del backend contra un PostgreSQL efímero y el build del frontend en cada push.
 

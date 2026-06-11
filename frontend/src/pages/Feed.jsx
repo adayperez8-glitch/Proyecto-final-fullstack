@@ -101,8 +101,7 @@ export default function Feed() {
 
       <MoodPicker actual={miMood} onSet={setMiMood} />
 
-      {/* Apoyos sobre MI ánimo: reacciones de amigos y el mensaje del coach
-          (bot Brote vía n8n). Llegan en vivo por SSE al refrescar el feed. */}
+      {/* Apoyos sobre MI ánimo: las reacciones de mis amigos, en vivo (SSE). */}
       {miMood?.reactions?.length > 0 && (
         <div className={s.apoyos}>
           {miMood.reactions.map((r) => (

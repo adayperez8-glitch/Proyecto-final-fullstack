@@ -9,7 +9,6 @@ import commentsRoutes from './modules/comments/comments.routes.js'
 import messagesRoutes from './modules/messages/messages.routes.js'
 import friendsRoutes from './modules/friends/friends.routes.js'
 import statsRoutes from './modules/stats/stats.routes.js'
-import maintenanceRoutes from './modules/maintenance/maintenance.routes.js'
 import { sseHandler } from './lib/events.js'
 
 // Agregador de todas las rutas de la API. Se monta bajo /api en app.js.
@@ -29,6 +28,5 @@ api.use('/comments', commentsRoutes)
 api.use('/messages', messagesRoutes)
 api.use('/friends', friendsRoutes)
 api.use('/stats', statsRoutes)
-api.use('/maintenance', maintenanceRoutes)
 
 export default api
