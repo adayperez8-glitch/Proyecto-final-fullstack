@@ -9,6 +9,20 @@
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
+
+/* Apoyo con mensaje (p.ej. el coach Brote) sobre el ánimo de la tarjeta */
+.apoyoTxt {
+  background: var(--sage-soft);
+  border-left: 3px solid var(--sage);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+.apoyoTxt b {
+  color: var(--espresso);
+}
 .card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);

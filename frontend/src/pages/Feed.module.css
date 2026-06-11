@@ -88,6 +88,32 @@
   color: var(--coral);
 }
 
+/* Apoyos sobre mi ánimo (reacciones de amigos + mensaje del coach) */
+.apoyos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apoyo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--sage-soft);
+  border: 1.5px solid var(--sage);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  animation: brote-fade-up 0.35s ease both;
+}
+.apoyoEmoji {
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+.apoyoTexto b {
+  color: var(--espresso);
+}
+
 /* Cabecera de sección */
 .seccionHead {
   display: flex;

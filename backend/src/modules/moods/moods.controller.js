@@ -41,9 +41,12 @@ export async function setMood(req, res) {
 }
 
 export async function myMood(req, res) {
+  // Incluye las reacciones para que el dueño vea los apoyos (y el mensaje del
+  // coach de N8N) sobre su propio ánimo en el feed.
   const mood = await prisma.mood.findFirst({
     where: { userId: req.user.id },
     orderBy: { createdAt: 'desc' },
+    include: { reactions: { include: { from: true }, orderBy: { createdAt: 'desc' } } },
   })
   res.json({ mood: mood ? moodDTO({ ...mood, user: req.user }) : null })
 }

@@ -126,6 +126,15 @@ export default function SessionCard({ item, me }) {
             </div>
           )}
 
+          {/* Apoyos con mensaje (p.ej. el coach Brote de n8n) */}
+          {reacciones
+            .filter((r) => r.text)
+            .map((r) => (
+              <div key={r.id} className={s.apoyoTxt}>
+                {r.emoji} <b>{r.from?.displayName?.split(' ')[0] || r.from?.username}:</b> {r.text}
+              </div>
+            ))}
+
           {/* Comentarios flotantes sobre la cuenta atrás */}
           <div className={s.floats}>
             {comentarios.length === 0 ? (

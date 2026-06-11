@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { reactionDTO } from '../../utils/serializers.js'
+import { notifyFriendsOf } from '../../lib/events.js'
 
 // Usuario-bot que firma los mensajes de apoyo del coach de ánimo.
 // Se cachea tras la primera búsqueda (no cambia en tiempo de ejecución).
@@ -37,5 +38,7 @@ export async function coachReaction(req, res) {
     data: { moodId, fromId: bot.id, emoji, text },
     include: { from: true },
   })
+  // Empuja el mensaje del coach en tiempo real al dueño del ánimo (y amigos).
+  notifyFriendsOf(mood.userId, 'feed', { kind: 'reaction' })
   res.status(201).json({ reaccion: reactionDTO(reaction) })
 }

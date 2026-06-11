@@ -101,6 +101,22 @@ export default function Feed() {
 
       <MoodPicker actual={miMood} onSet={setMiMood} />
 
+      {/* Apoyos sobre MI ánimo: reacciones de amigos y el mensaje del coach
+          (bot Brote vía n8n). Llegan en vivo por SSE al refrescar el feed. */}
+      {miMood?.reactions?.length > 0 && (
+        <div className={s.apoyos}>
+          {miMood.reactions.map((r) => (
+            <div key={r.id} className={s.apoyo}>
+              <span className={s.apoyoEmoji}>{r.emoji}</span>
+              <span className={s.apoyoTexto}>
+                <b>{r.from?.displayName || 'Alguien'}</b>
+                {r.text ? `: ${r.text}` : ' te manda ánimo'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Mi sesión de hoy */}
       {miSesion ? (
         <section className={s.miSesion}>
