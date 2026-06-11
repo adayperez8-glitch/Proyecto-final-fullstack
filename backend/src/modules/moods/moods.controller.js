@@ -11,9 +11,13 @@ export async function setMood(req, res) {
   const created = await prisma.mood.create({ data: { userId: req.user.id, mood, note } })
 
   // Ánimo anterior del usuario, para que el coach pueda decir cosas como
-  // "ayer estabas bien, recuperemos ese ánimo".
+  // "ayer estabas bien, recuperemos ese ánimo". Se busca el último ánimo de un
+  // día ANTERIOR a hoy: si hoy ya registraste otro, ese no cuenta como "ayer"
+  // (si no, registrar dos ánimos el mismo día taparía siempre el de ayer).
+  const inicioDeHoy = new Date(created.createdAt)
+  inicioDeHoy.setHours(0, 0, 0, 0)
   const previous = await prisma.mood.findFirst({
-    where: { userId: req.user.id, id: { not: created.id } },
+    where: { userId: req.user.id, createdAt: { lt: inicioDeHoy } },
     orderBy: { createdAt: 'desc' },
   })
 

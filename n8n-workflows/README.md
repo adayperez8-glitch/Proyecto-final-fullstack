@@ -69,6 +69,9 @@ Cuando alguien fija su ánimo, la API llama al webhook con este payload:
 4. (Opcional, recomendado) En N8N define la variable de entorno
    `OPENAI_API_KEY` para que el coach genere el texto con IA. Sin ella, el
    workflow sigue funcionando con las plantillas.
+   > N8N 2.x bloquea por defecto el acceso a `$env` desde nodos Code
+   > ("access to env vars denied"); el nodo lo captura y cae a la plantilla.
+   > Para usar la IA, arranca N8N con `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`.
 5. **Activa** ambos workflows (toggle *Active*).
 
 ## ✅ Cómo probarlo
