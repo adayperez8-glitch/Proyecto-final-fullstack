@@ -45,22 +45,14 @@ export function computeStreaks(completedDates, now = new Date()) {
   return { actual, mejor }
 }
 
-/**
- * Minutos y sesiones completadas por día, para los últimos `days` días
- * (del más antiguo al más reciente, rellenando con ceros los días vacíos).
- * Cada sesión debe tener { completedAt, goalMinutes }.
- */
-export function minutesByDay(sessions, days = 7, now = new Date()) {
-  const base = new Date(now)
-  base.setHours(0, 0, 0, 0)
-
+// Construye `count` días seguidos desde `firstDay` y reparte las sesiones.
+function fillDays(firstDay, count, sessions) {
   const out = []
-  for (let i = days - 1; i >= 0; i--) {
-    const day = new Date(base)
-    day.setDate(base.getDate() - i)
+  for (let i = 0; i < count; i++) {
+    const day = new Date(firstDay)
+    day.setDate(firstDay.getDate() + i)
     out.push({ fecha: dayKey(day), minutos: 0, sesiones: 0 })
   }
-
   const index = new Map(out.map((o, i) => [o.fecha, i]))
   for (const s of sessions) {
     const i = index.get(dayKey(s.completedAt))
@@ -70,4 +62,29 @@ export function minutesByDay(sessions, days = 7, now = new Date()) {
     }
   }
   return out
+}
+
+/**
+ * Minutos y sesiones completadas por día, para los últimos `days` días
+ * (del más antiguo al más reciente, rellenando con ceros los días vacíos).
+ * Cada sesión debe tener { completedAt, goalMinutes }.
+ */
+export function minutesByDay(sessions, days = 7, now = new Date()) {
+  const base = new Date(now)
+  base.setHours(0, 0, 0, 0)
+  const first = new Date(base)
+  first.setDate(base.getDate() - (days - 1))
+  return fillDays(first, days, sessions)
+}
+
+/**
+ * La semana de calendario ACTUAL, siempre de lunes a domingo (los días que
+ * aún no han llegado van con ceros). Para la gráfica semanal.
+ */
+export function weekByDay(sessions, now = new Date()) {
+  const base = new Date(now)
+  base.setHours(0, 0, 0, 0)
+  const lunes = new Date(base)
+  lunes.setDate(base.getDate() - ((base.getDay() + 6) % 7)) // getDay(): 0=domingo
+  return fillDays(lunes, 7, sessions)
 }

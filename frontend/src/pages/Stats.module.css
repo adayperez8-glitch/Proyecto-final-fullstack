@@ -97,6 +97,10 @@
   font-weight: 800;
   color: var(--ink-soft);
 }
+/* Días de la semana que aún no han llegado */
+.colFuturo {
+  opacity: 0.38;
+}
 
 /* Estudio vs trabajo */
 .split {

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { computeStreaks, minutesByDay, dayKey } from '../src/utils/stats.js'
+import { computeStreaks, minutesByDay, weekByDay, dayKey } from '../src/utils/stats.js'
 
 // Fecha fija para que los tests no dependan del día en que se ejecuten.
 const HOY = new Date('2026-06-10T15:00:00')
@@ -60,4 +60,27 @@ test('minutesByDay ignora sesiones fuera de la ventana', () => {
   const sesiones = [{ completedAt: dia(-10), goalMinutes: 60 }]
   const semana = minutesByDay(sesiones, 7, HOY)
   assert.ok(semana.every((d) => d.minutos === 0))
+})
+
+test('weekByDay va siempre de lunes a domingo (HOY es miércoles)', () => {
+  // 2026-06-10 cae en miércoles → la semana es del lunes 8 al domingo 14.
+  const semana = weekByDay([], HOY)
+  assert.equal(semana.length, 7)
+  assert.equal(semana[0].fecha, '2026-06-08')
+  assert.equal(semana.at(-1).fecha, '2026-06-14')
+})
+
+test('weekByDay coloca la sesión de hoy en su día de la semana', () => {
+  const semana = weekByDay([{ completedAt: dia(0), goalMinutes: 45 }], HOY)
+  assert.equal(semana[2].fecha, dayKey(HOY)) // miércoles = 3ª posición
+  assert.equal(semana[2].minutos, 45)
+  assert.ok(semana.filter((d) => d.minutos > 0).length === 1)
+})
+
+test('weekByDay con HOY en domingo no se pasa a la semana siguiente', () => {
+  const domingo = new Date('2026-06-14T12:00:00')
+  const semana = weekByDay([{ completedAt: domingo, goalMinutes: 30 }], domingo)
+  assert.equal(semana[0].fecha, '2026-06-08')
+  assert.equal(semana.at(-1).fecha, '2026-06-14')
+  assert.equal(semana.at(-1).minutos, 30)
 })

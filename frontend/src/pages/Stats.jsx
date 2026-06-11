@@ -56,6 +56,12 @@ export default function Stats() {
   const pctEstudio = totalTipo ? Math.round((stats.porTipo.STUDY / totalTipo) * 100) : 0
   const sinDatos = stats.totalSesiones === 0
 
+  // Clave de HOY en local (YYYY-MM-DD), para atenuar los días aún por llegar.
+  const ahora = new Date()
+  const hoyKey = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`
+  // El jardín se planta del día más reciente (arriba izquierda) al más antiguo.
+  const jardin = [...stats.mes].reverse()
+
   return (
     <div className={s.page}>
       <header className={s.masthead}>
@@ -96,9 +102,9 @@ export default function Stats() {
           {/* Gráfica de la semana */}
           <section>
             <h2 className={s.seccion}>Esta semana</h2>
-            <div className={s.chart} role="img" aria-label="Minutos de foco por día de la última semana">
+            <div className={s.chart} role="img" aria-label="Minutos de foco por día, de lunes a domingo">
               {stats.semana.map((d) => (
-                <div key={d.fecha} className={s.col}>
+                <div key={d.fecha} className={`${s.col} ${d.fecha > hoyKey ? s.colFuturo : ''}`}>
                   <span className={s.colMin}>{d.minutos > 0 ? formatoMin(d.minutos) : ''}</span>
                   <div className={s.barWrap}>
                     <div
@@ -131,10 +137,10 @@ export default function Stats() {
           <section>
             <h2 className={s.seccion}>El jardín (últimas 4 semanas)</h2>
             <p className={s.leyenda}>
-              Cada parcela es un día: 🌱 &lt;1h · 🌿 1-3h · 🌺 3-6h · 🌳 +6h
+              Cada parcela es un día (hoy arriba a la izquierda): 🌱 &lt;1h · 🌿 1-3h · 🌺 3-6h · 🌳 +6h
             </p>
-            <div className={s.garden} role="img" aria-label="Jardín: una planta por cada día con foco">
-              {stats.mes.map((d) => {
+            <div className={s.garden} role="img" aria-label="Jardín: una planta por cada día con foco, del más reciente al más antiguo">
+              {jardin.map((d) => {
                 const planta = plantaDelDia(d.minutos)
                 return (
                   <div

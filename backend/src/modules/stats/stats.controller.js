@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
-import { computeStreaks, minutesByDay } from '../../utils/stats.js'
+import { computeStreaks, minutesByDay, weekByDay } from '../../utils/stats.js'
 
 // Estadísticas de foco del usuario: rachas, totales, minutos por día (semana y
 // mes para el jardín) y últimos ánimos. Todo se calcula de las tablas que ya
@@ -34,7 +34,7 @@ export async function myStats(req, res) {
       totalSesiones: completadas.length,
       totalMinutos,
       porTipo,
-      semana: minutesByDay(completadas, 7),
+      semana: weekByDay(completadas), // semana de calendario: lunes → domingo
       mes: minutesByDay(completadas, 28), // 4 semanas → el jardín del perfil
       animos: animos.map((m) => ({ mood: m.mood, fecha: m.createdAt })),
     },
