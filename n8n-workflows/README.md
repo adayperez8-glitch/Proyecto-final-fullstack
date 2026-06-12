@@ -62,7 +62,7 @@ perezosa al leer/crear historias, así que nada depende de que N8N esté activo)
    ```
 4. **Activa** ambos workflows (toggle *Active*) y arranca N8N (`n8n start`).
 
-## ✅ Cómo probarlo
+## ✅ Cómo probarlo (en local)
 
 1. Con backend, frontend y N8N arrancados, inicia una sesión **corta** (1 min)
    desde el feed.
@@ -72,3 +72,34 @@ perezosa al leer/crear historias, así que nada depende de que N8N esté activo)
 
 > Si N8N está apagado, la app funciona igual (el webhook es *fire-and-forget*);
 > simplemente no llega la felicitación.
+
+---
+
+## 🌍 Contra la app desplegada (túnel) — para la demo en producción
+
+La automatización funciona también desde **https://brotes.vercel.app** sin
+desplegar N8N: el backend de Render avisa a tu N8N local a través de un túnel.
+
+**Cómo está montado:** en N8N conviven dos variantes del workflow de
+felicitación — la local (webhook `/webhook/brote-sesion` → `localhost:3000`) y
+la **PROD** (webhook `/webhook/brote-sesion-prod` → el backend de Render, con
+la misma `x-api-key`).
+
+**Pasos (≈5 min, repetir si se reinició el túnel):**
+
+1. Arranca N8N: `n8n start`
+2. Arranca el túnel en otra terminal y copia la URL `https://….trycloudflare.com`:
+   ```powershell
+   cloudflared tunnel --url http://localhost:5678
+   ```
+   *(instalable con `winget install Cloudflare.cloudflared`)*
+3. En **Render** → servicio backend → *Environment*:
+   - `INTERNAL_API_KEY` = la misma clave de los workflows
+   - `N8N_SESSION_WEBHOOK_URL` = `https://<url-del-túnel>/webhook/brote-sesion-prod`
+
+   Al guardar, Render redespliega (~3 min).
+4. Prueba: sesión de 1 minuto en la app desplegada → Completar ✓ → MD del bot.
+
+> ⚠️ La URL gratuita de trycloudflare **cambia en cada arranque del túnel**:
+> antes de una demo, repite los pasos 2-3. Si el túnel no está corriendo, la
+> app de producción funciona igual — solo deja de llegar la felicitación.

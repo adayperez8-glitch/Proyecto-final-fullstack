@@ -201,7 +201,7 @@ Base: `/api`. Todas las rutas (salvo register/login) requieren `Authorization: B
 | PATCH | `/users/me` · POST `/users/me/avatar` | Editar perfil · subir avatar |
 | DELETE | `/users/:id` · PATCH `/users/:id/role` | Eliminar usuario · cambiar rol *(admin)* |
 | GET | `/sessions/feed` · `/sessions/me` · `/sessions/:id` | Feed de amigos · mi sesión activa · detalle |
-| POST | `/sessions` | Iniciar cuenta atrás `{ type, goalMinutes }` |
+| POST | `/sessions` | Iniciar cuenta atrás `{ type, goalMinutes }` (1–720 min) |
 | PATCH | `/sessions/:id/complete` | Completar — **solo al llegar a cero** (dispara email) |
 | PATCH | `/sessions/:id/cancel` | Cancelar |
 | POST | `/moods` · GET `/moods/me` · `/moods/:id` | Fijar ánimo · el mío (con apoyos) · detalle |
@@ -367,6 +367,8 @@ Completar sesión ─► webhook ─► Switch(¿estudio o trabajo?) ─► MD d
 
 Los workflows se autentican contra los endpoints internos con `x-api-key` (= `INTERNAL_API_KEY`). Si N8N está apagado, la app funciona igual: el webhook es *fire-and-forget*.
 
+**¿Y contra la app desplegada?** La automatización también funciona en producción **sin desplegar N8N**: una segunda variante del workflow (webhook `/webhook/brote-sesion-prod`) apunta al backend de Render, y un **túnel de Cloudflare** (`cloudflared tunnel --url http://localhost:5678`) expone el N8N local con una URL pública que se configura en Render (`N8N_SESSION_WEBHOOK_URL`). Probado de extremo a extremo en producción. Pasos detallados en [n8n-workflows/README.md](n8n-workflows/README.md).
+
 ## 🧪 Tests y CI
 
 ```bash
@@ -386,6 +388,7 @@ cd backend && npm test     # 37 tests
 | Backend | **Render** (Node) | Root `backend`, start `npm run start:prod`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (admite varios orígenes separados por coma), `CLOUDINARY_URL`, `SMTP_*` |
 | IA | **Render** (Python) | Root `ai-service`, start `uvicorn main:app --host 0.0.0.0 --port $PORT`. **Mismo `JWT_SECRET`** que el backend |
 | BD | **Neon** | PostgreSQL serverless; conexión directa (sin `-pooler`) |
+| N8N | **Local + túnel** | `cloudflared tunnel` expone el N8N local; en Render: `INTERNAL_API_KEY` + `N8N_SESSION_WEBHOOK_URL` (la URL del túnel cambia en cada arranque) |
 
 Push a `main` → redeploy automático de las tres piezas + CI.
 
