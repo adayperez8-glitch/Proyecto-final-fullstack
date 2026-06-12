@@ -74,7 +74,7 @@
             {
               "id": "b15e02ad-3592-4b77-b577-54c967560d8f",
               "name": "text",
-              "value": "={{ \"📚 ¡Has terminado por hoy, \" + $json.body.displayName + \"! \" + $json.body.goalMinutes + \" minutos de estudio completados. ¡Felicidades, tu jardín acaba de crecer! 🌸\" }}",
+              "value": "={{ \"📚 ¡Has terminado por hoy, \" + $json.body.displayName + \"! \" + ($json.body.goalMinutes === 1 ? \"1 minuto\" : $json.body.goalMinutes + \" minutos\") + \" de estudio. ¡Felicidades, tu jardín acaba de crecer! 🌸\" }}",
               "type": "string"
             }
           ]
@@ -100,7 +100,7 @@
             {
               "id": "e48135d0-68c5-4eaa-a8aa-87fc9a893ac2",
               "name": "text",
-              "value": "={{ \"💻 ¡Sesión de trabajo completada, \" + $json.body.displayName + \"! \" + $json.body.goalMinutes + \" minutos de foco. ¡Felicidades, ahora toca descansar! 🌱\" }}",
+              "value": "={{ \"💻 ¡Sesión de trabajo completada, \" + $json.body.displayName + \"! \" + ($json.body.goalMinutes === 1 ? \"1 minuto\" : $json.body.goalMinutes + \" minutos\") + \" de foco. ¡Felicidades, ahora toca descansar! 🌱\" }}",
               "type": "string"
             }
           ]
