@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Brote — API + IA",
-    "description": "Colección de la API (backend Node) y el microservicio de IA (FastAPI).\n\nVariables:\n- nodeUrl: backend Express (http://localhost:3000)\n- aiUrl: servicio de IA (http://localhost:8000)\n- token: se rellena solo al hacer Login\n- conversationId: se rellena solo al usar el chat\n- requestId: se rellena solo al listar solicitudes de amistad",
+    "description": "Colección de la API (backend Node) y el microservicio de IA (FastAPI).\n\nVariables:\n- nodeUrl: backend Express (http://localhost:3000)\n- aiUrl: servicio de IA (http://localhost:8000)\n- token: se rellena solo al hacer Login\n- conversationId: se rellena solo al usar el chat\n- requestId: se rellena solo al listar solicitudes de amistad\n- internalApiKey: para los endpoints internos de N8N (= INTERNAL_API_KEY)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -9,7 +9,8 @@
     { "key": "aiUrl", "value": "http://localhost:8000" },
     { "key": "token", "value": "" },
     { "key": "conversationId", "value": "" },
-    { "key": "requestId", "value": "" }
+    { "key": "requestId", "value": "" },
+    { "key": "internalApiKey", "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY" }
   ],
   "item": [
     {
@@ -268,6 +269,42 @@
               "raw": "{{aiUrl}}/api/chat/history/{{conversationId}}",
               "host": ["{{aiUrl}}"],
               "path": ["api", "chat", "history", "{{conversationId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mantenimiento (N8N)",
+      "item": [
+        {
+          "name": "Felicitación de sesión (la llama N8N)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{internalApiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{nodeUrl}}/api/maintenance/session-congrats",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "maintenance", "session-congrats"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"ID_DEL_USUARIO\",\n  \"text\": \"📚 ¡Has terminado por hoy! ¡Felicidades! 🌸\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Limpieza de historias (la llama N8N)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-api-key", "value": "{{internalApiKey}}" }],
+            "url": {
+              "raw": "{{nodeUrl}}/api/maintenance/stories/cleanup",
+              "host": ["{{nodeUrl}}"],
+              "path": ["api", "maintenance", "stories", "cleanup"]
             }
           }
         }

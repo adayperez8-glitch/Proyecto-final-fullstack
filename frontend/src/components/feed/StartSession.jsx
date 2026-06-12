@@ -60,7 +60,7 @@ export default function StartSession({ onStart }) {
         <input
           id="min"
           type="number"
-          min={5}
+          min={1}
           max={720}
           value={min}
           onChange={(e) => setMin(e.target.value)}

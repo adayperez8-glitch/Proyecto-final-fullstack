@@ -16,6 +16,12 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   jwtSecret: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  // Automatización (N8N): clave de los endpoints internos (cabecera x-api-key)
+  // y webhook al que avisamos cuando alguien completa una sesión de foco.
+  internalApiKey: process.env.INTERNAL_API_KEY || '',
+  n8n: {
+    sessionWebhookUrl: process.env.N8N_SESSION_WEBHOOK_URL || '',
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,

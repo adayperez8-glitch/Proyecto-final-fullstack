@@ -5,6 +5,6 @@ export const createSessionSchema = z.object({
   goalMinutes: z
     .number()
     .int('Debe ser un número entero de minutos')
-    .min(5, 'Mínimo 5 minutos')
+    .min(1, 'Mínimo 1 minuto')
     .max(720, 'Máximo 12 horas (720 min)'),
 })

@@ -1,0 +1,161 @@
+{
+  "name": "Brote — Felicitación de sesión",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brote-sesion",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "f1a20511-0001-4a0e-9c21-aa1112223331",
+      "name": "Webhook (sesión completada)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-320, 0],
+      "webhookId": "cc9f0452-885d-4179-b5fb-eeb411bc8cfc"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "loose", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "61f0e4f8-42c0-4dc4-99f8-65fb4e0a176d",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "STUDY",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "estudio"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "loose", "version": 2 },
+                "conditions": [
+                  {
+                    "id": "72a1f5a9-53d1-4ed5-aaf9-76fc5f1b287e",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "WORK",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "trabajo"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "none" }
+      },
+      "id": "8aa54671-83d4-4b83-b78a-a783b5f357ff",
+      "name": "¿Estudio o trabajo?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [-100, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a04df19c-2481-4a66-a466-43b856459c7e",
+              "name": "userId",
+              "value": "={{ $json.body.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "b15e02ad-3592-4b77-b577-54c967560d8f",
+              "name": "text",
+              "value": "={{ \"📚 ¡Has terminado por hoy, \" + $json.body.displayName + \"! \" + $json.body.goalMinutes + \" minutos de estudio completados. ¡Felicidades, tu jardín acaba de crecer! 🌸\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c26f13be-46a3-4c88-8688-65da78671eaf",
+      "name": "Mensaje: estudio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [140, -120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d37024cf-57b4-4d99-9799-76eb89782fb1",
+              "name": "userId",
+              "value": "={{ $json.body.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "e48135d0-68c5-4eaa-a8aa-87fc9a893ac2",
+              "name": "text",
+              "value": "={{ \"💻 ¡Sesión de trabajo completada, \" + $json.body.displayName + \"! \" + $json.body.goalMinutes + \" minutos de foco. ¡Felicidades, ahora toca descansar! 🌱\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f59246e1-79d6-4fbb-bcbb-98ad0a9a4bd3",
+      "name": "Mensaje: trabajo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [140, 120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/maintenance/session-congrats",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ userId: $json.userId, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "06a357f2-8ae7-4acc-cdcc-a9be1b0b5ce4",
+      "name": "Crear MD de felicitación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [380, 0]
+    }
+  ],
+  "connections": {
+    "Webhook (sesión completada)": {
+      "main": [[{ "node": "¿Estudio o trabajo?", "type": "main", "index": 0 }]]
+    },
+    "¿Estudio o trabajo?": {
+      "main": [
+        [{ "node": "Mensaje: estudio", "type": "main", "index": 0 }],
+        [{ "node": "Mensaje: trabajo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mensaje: estudio": {
+      "main": [[{ "node": "Crear MD de felicitación", "type": "main", "index": 0 }]]
+    },
+    "Mensaje: trabajo": {
+      "main": [[{ "node": "Crear MD de felicitación", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

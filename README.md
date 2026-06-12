@@ -30,6 +30,7 @@
 - **Mensajes privados** con bandeja paginada y aviso de no leídos en vivo.
 - **Jardín, rachas y estadísticas**: cada sesión completada planta un brote 🌱→🌳; racha de días consecutivos, gráfica semanal (L→D) y reparto estudio/trabajo.
 - **Asistente de IA**: agente LangGraph con RAG (cita sus fuentes), datos reales del usuario, respuesta **en streaming** y conversaciones guardadas.
+- **Felicitación automática (N8N)**: al completar tu sesión, el bot **Brote** te felicita con un mensaje privado que llega en vivo — un workflow con **Switch** distingue estudio 📚 de trabajo 💻.
 - **Panel de administración**: gestión de usuarios y roles (solo ADMIN).
 - **PWA instalable** en el móvil, **emails transaccionales** y **modo demo** de la IA sin clave.
 
@@ -40,6 +41,7 @@
 | Frontend | React 18 · Vite · React Router v6 · Context API · CSS Modules · PWA (service worker) |
 | Backend | Node.js · Express 5 · Prisma 6 (ORM) · JWT · zod · nodemailer · SSE · Multer + Cloudinary |
 | IA | Python · FastAPI · LangGraph (agente ReAct) · ChromaDB (RAG) · Google Gemini (streaming) |
+| Automatización | N8N — 2 workflows con lógica condicional (Switch / IF) conectados a la API |
 | Base de datos | PostgreSQL (Neon en producción) |
 | Tests / CI | Runner nativo de Node (`node --test`) + Supertest · GitHub Actions |
 | Despliegue | Vercel (frontend) · Render (backend + IA) · Neon (BD) |
@@ -99,6 +101,9 @@ proyecto final fullstack/
 │   ├── agent/                # agent.py (ReAct + streaming) · tools.py (2 tools)
 │   ├── rag/                  # docs/ (5 documentos) · ingest.py · store.py
 │   └── main.py · auth.py · db.py · config.py · schemas.py
+├── n8n-workflows/            # Automatizaciones N8N exportadas (JSON + guía)
+│   ├── session-congrats.json # Webhook → Switch → MD de felicitación del bot
+│   └── story-cleanup.json    # Cron → IF → limpieza de historias de +24 h
 ├── docs/                     # brote.postman_collection.json · USO_IA.md
 ├── .github/workflows/ci.yml  # CI: tests + build en cada push
 └── README.md · REQUISITOS.md
@@ -164,6 +169,13 @@ uvicorn main:app --reload --port 8000   # Swagger → http://localhost:8000/docs
 ```
 > Sin `GOOGLE_API_KEY` el chat funciona en **modo demo** (ejercita el RAG con respuesta simulada).
 
+### 5. Automatización N8N (opcional, para la felicitación del bot)
+```bash
+npm install -g n8n
+n8n start        # → http://localhost:5678
+```
+Importa y activa los workflows de [n8n-workflows/](n8n-workflows/) (guía en su README) y añade `INTERNAL_API_KEY` + `N8N_SESSION_WEBHOOK_URL` al `.env` del backend.
+
 ### 👤 Usuarios de demo (tras el seed)
 | Usuario | Email | Rol |
 |---------|-------|-----|
@@ -208,6 +220,8 @@ Base: `/api`. Todas las rutas (salvo register/login) requieren `Authorization: B
 | GET | `/events?token=` | **Tiempo real (SSE)**: eventos `feed`, `message`, `friend` |
 
 **Microservicio de IA** (`:8000`, mismo JWT): `POST /api/chat` · `POST /api/chat/stream` (SSE) · `GET /api/chat/conversations` · `GET /api/chat/history/{id}` · Swagger en `/docs`.
+
+**Endpoints internos** (los llama N8N con cabecera `x-api-key`, no JWT): `POST /maintenance/session-congrats` (crea el MD de felicitación del bot) · `POST /maintenance/stories/cleanup` (purga historias de +24 h).
 
 > ⏱️ **Anti-trampas:** una sesión solo puede completarse cuando su cuenta atrás llega a cero (las rachas no se pueden falsear). 🚦 Los endpoints de escritura y el chat de IA tienen límite de frecuencia.
 
@@ -339,6 +353,20 @@ erDiagram
 
 ---
 
+## 🤖 Automatización (N8N)
+
+Dos workflows exportados como JSON en [n8n-workflows/](n8n-workflows/) (guía de importación incluida):
+
+```
+Completar sesión ─► webhook ─► Switch(¿estudio o trabajo?) ─► MD del bot Brote
+                                                              (llega EN VIVO por SSE)
+```
+
+- **Felicitación de sesión** ([session-congrats.json](n8n-workflows/session-congrats.json)): al completar tu cuenta atrás, la API avisa al webhook; un **Switch** elige el mensaje según el tipo de sesión (📚 *"¡Has terminado por hoy…!"* / 💻 *"¡Sesión de trabajo completada…!"*) y el bot **Brote** te lo manda como MD, que aparece al instante con su badge.
+- **Limpieza de historias** ([story-cleanup.json](n8n-workflows/story-cleanup.json)): cron horario + nodo **IF** (`deleted > 0`) sobre el endpoint de purga.
+
+Los workflows se autentican contra los endpoints internos con `x-api-key` (= `INTERNAL_API_KEY`). Si N8N está apagado, la app funciona igual: el webhook es *fire-and-forget*.
+
 ## 🧪 Tests y CI
 
 ```bash
@@ -372,7 +400,8 @@ Push a `main` → redeploy automático de las tres piezas + CI.
 | Validaciones en endpoints | ✅ | zod en **todos** los endpoints con entrada |
 | Errores centralizados con códigos HTTP | ✅ | `errorHandler` único (400/401/403/404/409/429/500) |
 | Variables de entorno | ✅ | `.env` fuera de git; `JWT_SECRET` obligatorio en producción (fail-fast) |
-| Integración externa | ≥ 1 | **Email transaccional** (nodemailer) + microservicio IA + Cloudinary |
+| Integración externa | ≥ 1 | **Email transaccional** (nodemailer) + Gemini + Cloudinary |
+| Automatización (N8N) | workflow activo con IF/Switch + JSON en repo | **2 workflows**: felicitación de sesión (**Switch**) y limpieza de historias (**IF**), exportados en [n8n-workflows/](n8n-workflows/) |
 | React 18 + Vite · Router v6 | ≥ 4 rutas | **9 rutas** (Feed, Login, Register, Buscar, Perfil, Mensajes, Estadísticas, Asistente, Admin) |
 | Context API · formularios controlados · loading/error/vacío · responsive · CSS Modules | ✅ | AuthContext + EventsContext · validación por campo · `States.jsx` · mobile-first · `*.module.css` |
 | Tests que pasan | ≥ 8 | **37/37** + CI en GitHub Actions |

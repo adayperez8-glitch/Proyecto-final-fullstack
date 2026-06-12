@@ -1,0 +1,150 @@
+{
+  "name": "Brote — Limpieza de historias (24h)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "766ae519-b62b-427f-96ba-aeee32eb6685",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/maintenance/stories/cleanup",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "REEMPLAZA_POR_TU_INTERNAL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "190c3b1b-69e8-4efd-ba0a-8097ac8ad6d5",
+      "name": "Borrar historias expiradas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -40,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "00d00c37-96d6-4131-a53c-ff2786e37431",
+              "leftValue": "={{ $json.deleted }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "db8cb322-0e2b-4f6c-8a3b-fb9d6615c3ee",
+      "name": "¿Borró alguna?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9a6ccdde-4ce9-4c6e-9ccb-50e00d5fd4b5",
+      "name": "Sí: registrar limpieza",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ed1ec2e6-aefb-4240-9617-9b831997bc0f",
+      "name": "No: nada que borrar",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        440,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Cada hora": {
+      "main": [
+        [
+          {
+            "node": "Borrar historias expiradas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar historias expiradas": {
+      "main": [
+        [
+          {
+            "node": "¿Borró alguna?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Borró alguna?": {
+      "main": [
+        [
+          {
+            "node": "Sí: registrar limpieza",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No: nada que borrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

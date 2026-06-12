@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { computeEndsAt } from '../../utils/countdown.js'
 import { sessionDTO, moodDTO } from '../../utils/serializers.js'
 import { sendEmail, emails } from '../../services/email.js'
+import { notifySessionCompleted } from '../../services/n8n.js'
 import { friendIdsOf, areFriends } from '../../lib/friendships.js'
 import { notifyFriendsOf } from '../../lib/events.js'
 
@@ -134,6 +135,16 @@ async function endSession(req, status, sendMail) {
     sendEmail(emails.sessionCompleted(req.user, updated)).catch((e) =>
       console.error('email sesión:', e.message),
     )
+  }
+  // Automatización N8N: al COMPLETAR, el workflow felicita con un MD del bot
+  // Brote (Switch estudio/trabajo). Fire-and-forget, igual que el email.
+  if (status === 'COMPLETED') {
+    notifySessionCompleted({
+      userId: req.user.id,
+      displayName: req.user.displayName,
+      type: updated.type,
+      goalMinutes: updated.goalMinutes,
+    }).catch(() => {})
   }
   notifyFriendsOf(req.user.id, 'feed', { kind: 'session' })
   return sessionDTO({ ...updated, user: req.user })

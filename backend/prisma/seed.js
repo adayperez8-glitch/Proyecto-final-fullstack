@@ -33,6 +33,18 @@ async function main() {
     ),
   )
 
+  // Usuario-bot de la automatización N8N: firma el MD de felicitación
+  // que llega al completar una sesión de foco.
+  await prisma.user.create({
+    data: {
+      username: 'brote',
+      displayName: 'Brote 🌱',
+      email: 'brote@brote.app',
+      passwordHash,
+      bio: 'Tu compañero de foco. Te felicito cuando completas una sesión 🌱',
+    },
+  })
+
   // ── Sesiones de foco en distintos puntos del countdown ────────
   const sBig = await prisma.focusSession.create({
     data: {
