@@ -8,7 +8,11 @@ export async function notifySessionCompleted(payload) {
   try {
     await fetch(env.n8n.sessionWebhookUrl, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        // Evita la página de aviso de ngrok cuando el webhook se expone por túnel.
+        'ngrok-skip-browser-warning': 'true',
+      },
       body: JSON.stringify(payload),
     })
     return { sent: true }
